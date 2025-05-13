@@ -1,23 +1,29 @@
 import json
-from flask import Flask, request, jsonify, send_file, make_response
 from io import BytesIO
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient import http
+import logging
+from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from auth import auth_bp
+from models import User, USUARIOS
 
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'super-secret'
 
-@app.route('/')
-def index():
-    return "Servidor Flask funcionando!"
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login' # Atualiza o login_view para o blueprint
 
-# Definição das suas variáveis globais
-USUARIOS = {
-    'comercialuiza@gmail.com': {'senha': '33241990', 'pasta_id': '17BhKhWYRF45ygQevd-tv5AdSSztGD9yO'},
-    'andersonbuzelli01@gmail.com': {'senha': '33241990', 'pasta_id': '1wjDMahSNCtCFhk6f5Z1LQEE-_7CkVjQV'}
-    # Adicione mais clientes de teste conforme necessário
-}
+@login_manager.user_loader
+def load_user(user_id):
+    for i, (username, user_info) in enumerate(USUARIOS.items()):
+        if str(i) == user_id:
+            return User(str(i), username, user_info['senha'], user_info['pasta_id'])
+    return None
 
 CREDENTIALS_FILE = 'D:\\\\Documentos\\Desktop\\CONTROLLER WEB\\controller-web-879acc97b4a7.json'
 drive_service = None
@@ -38,37 +44,16 @@ except Exception as e:
 
 USUARIO_LOGADO = None
 
-# Definição das suas rotas e funções
-@app.route('/login', methods=['POST'])
-def login():
-    global USUARIO_LOGADO
-    print("Função de login foi chamada!")
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    print(f"Tentativa de login para o usuário: {username}")
-    if username in USUARIOS and USUARIOS[username]['senha'] == password:
-        USUARIO_LOGADO = username
-        print(f"Login bem-sucedido para: {username}")
-        return jsonify({'message': 'Login bem-sucedido!', 'username': username}), 200
-    else:
-        print(f"Falha no login para: {username}")
-        return jsonify({'message': 'Credenciais inválidas!'}), 401
+@app.route('/')
+def index():
+    return "Servidor Flask funcionando!"
 
 @app.route('/arquivos', methods=['GET'])
+@login_required
 def listar_arquivos():
-    print(f"Usuário logado ao acessar /arquivos: {USUARIO_LOGADO}")
-    print(f"Valor de USUARIO_LOGADO: '{USUARIO_LOGADO}'")
-    print(f"Conteúdo de USUARIOS: {USUARIOS}")
-    if not USUARIO_LOGADO:
-        return jsonify({'message': 'Usuário não autenticado!'}), 401
-    user_info = USUARIOS.get(USUARIO_LOGADO)
-    if not user_info or 'pasta_id' not in user_info:
-        return jsonify({'message': 'Pasta do usuário não encontrada!'}), 404
-    pasta_id = user_info['pasta_id']
-    print(f"ID da pasta do usuário: {pasta_id}")  # Adicione esta linha
-    query = f"'{pasta_id}' in parents and trashed = false"
-    print(f"Query para o Google Drive: {query}")  # Adicione esta linha
+    print(f"Usuário logado ao acessar /arquivos: {current_user.username}")
+    print(f"ID da pasta do usuário: {current_user.pasta_id}")
+    query = f"'{current_user.pasta_id}' in parents and trashed = false"
     if drive_service:
         try:
             results = drive_service.files().list(
@@ -76,22 +61,21 @@ def listar_arquivos():
                 fields="nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime)"
             ).execute()
             files = results.get('files', [])
-            return jsonify({'arquivos': files}), 200
+            return render_template('arquivos.html', arquivos=files) # Renderiza o template
         except Exception as e:
             print(f"Ocorreu um erro ao acessar o Google Drive: {e}")
-            return jsonify({'message': 'Erro ao acessar o Google Drive!'}), 500
+            return render_template('arquivos.html', arquivos=files)
     else:
         return jsonify({'message': 'Serviço do Google Drive não inicializado!'}), 500
-    
-@app.route('/download/<file_id>', methods=['GET'])
-def download_file(file_id):
-    if not USUARIO_LOGADO:
-        return jsonify({'message': 'Usuário não autenticado!'}), 401
 
+@app.route('/download/<file_id>', methods=['GET'])
+@login_required
+def download_file(file_id):
     if not drive_service:
         return jsonify({'message': 'Serviço do Google Drive não inicializado!'}), 500
 
     try:
+        response = None  # Inicialize response DENTRO do try
         # Obter informações sobre o arquivo para definir o nome e tipo MIME
         file_info = drive_service.files().get(fileId=file_id, fields='name, mimeType').execute()
         file_name = file_info.get('name', 'arquivo')
@@ -118,9 +102,19 @@ def download_file(file_id):
         response.headers['Content-Disposition'] = f'attachment; filename="{file_name}"'
         return response
 
+    except http.HttpError as e:
+        print(f"*** ERRO HTTP CAPTURADO: {e} ***")
+        app.logger.error(f"Erro HTTP ao baixar o arquivo {file_id}: {e}")
+        if e.resp.status == 404:
+            return jsonify({'message': 'Arquivo não encontrado!'}), 404
+        elif e.resp.status == 403:
+            return jsonify({'message': 'Sem permissão para acessar este arquivo!'}), 403
+        else:
+            return jsonify({'message': f'Erro ao baixar o arquivo {file_id}'}), 500
     except Exception as e:
-        print(f"Ocorreu um erro ao baixar o arquivo {file_id}: {e}")
+        app.logger.error(f"Ocorreu um erro inesperado ao baixar o arquivo {file_id}: {e}")
         return jsonify({'message': f'Erro ao baixar o arquivo {file_id}'}), 500
-    
+
 if __name__ == '__main__':
+    app.register_blueprint(auth_bp) # Registra o blueprint
     app.run(debug=True)

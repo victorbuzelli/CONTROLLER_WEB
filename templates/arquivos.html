@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seus Arquivos</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="{{ url_for('static', filename='images/logo_controller_1.png') }}" alt="Logo Controller" style="max-width: 300px; height: auto;">
+    </div>
+
+    <h1>Arquivos na sua pasta do Google Drive</h1>
+
+    {% if arquivos %}
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Tamanho</th>
+                <th>Criado em</th>
+                <th>Modificado em</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for arquivo in arquivos %}
+            <tr>
+                <td>{{ arquivo.name }}</td>
+                <td>{{ arquivo.mimeType }}</td>
+                <td>{{ arquivo.size }}</td>
+                <td>{{ arquivo.createdTime }}</td>
+                <td>{{ arquivo.modifiedTime }}</td>
+                <td><a href="/download/{{ arquivo.id }}" class="download-link">Download</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Nenhum arquivo encontrado nesta pasta.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('auth.logout') }}">Sair</a></p>
+</body>
+</html>
