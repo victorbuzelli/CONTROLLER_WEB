@@ -7,7 +7,7 @@ import logging
 from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from auth import auth_bp
-from models import User, USUARIOS
+from models import User, session
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -20,10 +20,8 @@ login_manager.login_view = 'auth.login' # Atualiza o login_view para o blueprint
 
 @login_manager.user_loader
 def load_user(user_id):
-    for i, (username, user_info) in enumerate(USUARIOS.items()):
-        if str(i) == user_id:
-            return User(str(i), username, user_info['senha'], user_info['pasta_id'])
-    return None
+    user = session.query(User).get(int(user_id))
+    return user
 
 CREDENTIALS_FILE = 'D:\\\\Documentos\\Desktop\\CONTROLLER WEB\\controller-web-879acc97b4a7.json'
 drive_service = None
@@ -48,8 +46,8 @@ USUARIO_LOGADO = None
 def index():
     return "Servidor Flask funcionando!"
 
-@app.route('/arquivos', methods=['GET'])
-@login_required
+'''@app.route('/arquivos', methods=['GET'])'''
+'''@login_required
 def listar_arquivos():
     print(f"Usuário logado ao acessar /arquivos: {current_user.username}")
     print(f"ID da pasta do usuário: {current_user.pasta_id}")
@@ -65,6 +63,26 @@ def listar_arquivos():
         except Exception as e:
             print(f"Ocorreu um erro ao acessar o Google Drive: {e}")
             return render_template('arquivos.html', arquivos=files)
+    else:
+        return jsonify({'message': 'Serviço do Google Drive não inicializado!'}), 500'''
+
+@app.route('/arquivos', methods=['GET'])
+@login_required
+def listar_arquivos():
+    print(f"Usuário logado ao acessar /arquivos: {current_user.username}")
+    print(f"ID da pasta do usuário: {current_user.pasta_id}") # VERIFICAÇÃO IMPORTANTE!
+    query = f"'{current_user.pasta_id}' in parents and trashed = false"
+    if drive_service:
+        try:
+            results = drive_service.files().list(
+                q=query,
+                fields="nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime)"
+            ).execute()
+            files = results.get('files', [])
+            return render_template('arquivos.html', documentos=files)
+        except Exception as e:
+            print(f"Ocorreu um erro ao acessar o Google Drive: {e}")
+            return render_template('arquivos.html', documentos=[])
     else:
         return jsonify({'message': 'Serviço do Google Drive não inicializado!'}), 500
 

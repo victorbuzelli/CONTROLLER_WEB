@@ -1,45 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Seus Arquivos</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controller Web | Meus Documentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos básicos para a logo e layout */
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+        }
+        .logo-container img {
+            max-width: 80%;
+            max-height: 80%;
+            border-radius: 50%;
+        }
+        .logo-font-controller {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        .document-card {
+            background-white border border-gray-200 rounded-xl p-5 shadow-md;
+            display: flex; /* Para alinhar os elementos internos */
+            flex-direction: column; /* Empilhar os elementos verticalmente */
+            justify-content: space-between; /* Espaço entre o texto e o link */
+        }
+        .document-info {
+            margin-bottom: 1rem; /* Espaço entre as informações do arquivo */
+        }
+    </style>
 </head>
-<body>
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img src="{{ url_for('static', filename='images/logo_controller_1.png') }}" alt="Logo Controller" style="max-width: 300px; height: auto;">
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="flex min-h-screen">
+        <aside class="bg-white w-64 shadow-lg p-4">
+            <div class="flex items-center mb-8">
+                <div class="logo-container">
+                    <img src="/static/images/logo_principal.png" alt="Logo Controller Web">
+                </div>
+                <span class="text-xl font-bold logo-font-controller">CONTROLLER</span>
+            </div>
+            <nav>
+                <a href="/arquivos" class="block py-2 px-4 text-indigo-600 font-semibold">Meus Documentos</a>
+                <a href="/auth/logout" class="block py-2 px-4 text-gray-600 hover:bg-gray-100">Sair</a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Meus Documentos</h1>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% if documentos %}
+                    {% for documento in documentos %}
+                    <div class="document-card">
+                        <div class="document-info">
+                            <h3 class="font-semibold text-lg mb-2">{{ documento.name }}</h3>
+                            <p class="text-gray-500 text-sm mb-1">Criado em: {{ documento.createdTime }}</p>
+                            {# Aqui você pode adicionar o ícone do tipo de arquivo se desejar #}
+                        </div>
+                        <a href="/download/{{ documento.id }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            <i class="fas fa-download mr-2"></i> Download
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>Nenhum documento encontrado.</p>
+                {% endif %}
+            </div>
+        </main>
     </div>
-
-    <h1>Arquivos na sua pasta do Google Drive</h1>
-
-    {% if arquivos %}
-    <table>
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Tipo</th>
-                <th>Tamanho</th>
-                <th>Criado em</th>
-                <th>Modificado em</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for arquivo in arquivos %}
-            <tr>
-                <td>{{ arquivo.name }}</td>
-                <td>{{ arquivo.mimeType }}</td>
-                <td>{{ arquivo.size }}</td>
-                <td>{{ arquivo.createdTime }}</td>
-                <td>{{ arquivo.modifiedTime }}</td>
-                <td><a href="/download/{{ arquivo.id }}" class="download-link">Download</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>Nenhum arquivo encontrado nesta pasta.</p>
-    {% endif %}
-
-    <p><a href="{{ url_for('auth.logout') }}">Sair</a></p>
 </body>
 </html>

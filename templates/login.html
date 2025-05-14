@@ -1,23 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controller Web | Portal do Cliente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #800020 0%, #B80F2E 100%); /* Tom de vinho/bordô */
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .logo-container {
+            width: 80px; /* Ajuste o tamanho conforme necessário */
+            height: 80px; /* Ajuste o tamanho conforme necessário */
+            border-radius: 50%;
+            background-color: white; /* Cor de fundo do círculo */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1.5rem; /* Centralizar e adicionar margem abaixo */
+        }
+        .logo-container img {
+            max-width: 70%; /* Ajuste o tamanho da imagem dentro do círculo */
+            max-height: 70%; /* Ajuste o tamanho da imagem dentro do círculo */
+            border-radius: 50%; /* Manter a imagem circular se ela for quadrada */
+        }
+        /* Estilos para as fontes da logo */
+        .logo-font-controller {
+            font-family: 'Montserrat', sans-serif; /* Substitua pela fonte correta */
+            font-weight: 700; /* Ajuste o peso conforme necessário */
+            letter-spacing: 0.05em; /* Ajuste o espaçamento se necessário */
+        }
+        .logo-font-assessoria {
+            font-family: 'Open Sans', sans-serif; /* Substitua pela fonte correta */
+            font-weight: 400; /* Ajuste o peso conforme necessário */
+            letter-spacing: 0.1em; /* Ajuste o espaçamento se necessário */
+            font-size: 0.9rem; /* Ajuste o tamanho se necessário */
+        }
+    </style>
 </head>
-<body>
-    <h1>Login</h1>
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    <form method="POST" action="{{ url_for('auth.login') }}">
-        <div>
-            <label for="username">Email:</label>
-            <input type="text" id="username" name="username" required>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div id="login-page" class="gradient-bg min-h-screen flex items-center justify-center p-4">
+        <div class="login-container rounded-xl shadow-2xl p-8 max-w-md w-full text-white">
+            <div class="text-center mb-8">
+                <div class="logo-container">
+                    <img src="/static/images/logo_principal.png" alt="Logo Controller Web">
+                </div>
+                <h1 class="text-3xl font-bold mb-2 logo-font-controller">CONTROLLER</h1>
+                <p class="opacity-80 logo-font-assessoria">Assessoria Contábil</p>
+            </div>
+
+            <form id="login-form" class="space-y-6" method="POST" action="/auth/login">
+                <div>
+                    <label for="email" class="block text-sm font-medium mb-1">Endereço de Email</label>
+                    <input type="email" id="email" name="username" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-white placeholder-white placeholder-opacity-70" placeholder="seu@email.com" required>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium mb-1">Senha</label>
+                    <input type="password" id="password" name="password" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-white placeholder-white placeholder-opacity-70" placeholder="••••••••" required>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input id="remember-me" type="checkbox" class="h-4 w-4 rounded border-white text-indigo-600 focus:ring-indigo-500">
+                        <label for="remember-me" class="ml-2 block text-sm">Lembrar-me</label>
+                    </div>
+
+                    <a href="#" class="text-sm font-medium hover:underline">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="w-full bg-white text-indigo-600 py-3 px-4 rounded-lg font-semibold hover:bg-opacity-90 transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Entrar
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <p>Novo cliente? <a href="/auth/register" class="font-medium hover:underline">Crie sua conta</a></p>
+            </div>
         </div>
-        <div>
-            <label for="password">Senha:</label>
-            <input type="password" id="password" name="password" required>
+    </div>
+
+    <div id="app" class="hidden min-h-screen">
+        <div class="sidebar fixed inset-y-0 left-0 bg-white w-64 shadow-lg z-50">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="logo-container">
+                        <img src="/static/images/logo_principal.png" alt="Logo Controller Web">
+                    </div>
+                    <span class="font-bold text-lg logo-font-controller">CONTROLLER</span>
+                </div>
+            </div>
+
+            <div class="p-4">
+                <div class="flex items-center space-x-3 mb-6">
+                    <img src="https://via.placeholder.com/40" alt="User" class="h-12 w-12 rounded-full border-2 border-indigo-100">
+                    <div>
+                        <p class="font-medium">Nome do Cliente</p>
+                        <p class="text-sm text-gray-500">ID do Cliente: </p>
+                    </div>
+                </div>
+
+                <nav class="space-y-1">
+                    <a href="/arquivos" class="flex items-center space-x-3 px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-medium">
+                        <i class="fas fa-home w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/arquivos" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg font-medium">
+                        <i class="fas fa-file-alt w-5"></i>
+                        <span>Meus Documentos</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg font-medium">
+                        <i class="fas fa-chart-line w-5"></i>
+                        <span>Relatórios</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg font-medium">
+                        <i class="fas fa-calendar-alt w-5"></i>
+                        <span>Calendário</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg font-medium">
+                        <i class="fas fa-cog w-5"></i>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+
+                <div class="mt-8 pt-4 border-t border-gray-200">
+                    <a href="/auth/logout" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg font-medium">
+                        <i class="fas fa-sign-out-alt w-5"></i>
+                        <span>Sair</span>
+                    </a>
+                </div>
+            </div>
         </div>
-        <button type="submit">Entrar</button>
-    </form>
-</body>
-</html>
+
+        <div class="ml-64">
+            <header class="bg-white shadow-sm">
+                <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <h1 class="text-lg font-semibold text-gray-900">Portal de Documentos</h1>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto p-4 sm:px-6 lg:px-8">
+                <div class="gradient-bg rounded-xl p-6 text-white mb-8">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2 logo-font-controller">Bem-vindo(a), Nome do Cliente!</h2>
+                            <p class="opacity-90 max-w-lg">Você tem 3 novos documentos enviados pela nossa equipe. Verifique suas notificações para atualizações importantes.</p>
+                        </div>
+                        <button class="bg-white text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-opacity-90">Ver Notificações</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Total de Documentos</p>
+                                <p class="text-3xl font-bold mt-1">24</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-indigo-50 text-indigo-600">
+                                <i class="fas fa-file-alt text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Pendentes de Revisão</p>
+                                <p class="text-3xl font-bold mt-1">3</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-yellow-50 text-yellow-600">
+                                <i class="fas fa-clock text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Uploads Recentes</p>
+                                <p class="text-3xl font-bold mt-1">5</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-green-50 text-green-600">
+                                <i class="fas fa-upload text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold">Meus Documentos</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Buscar documentos..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="flex flex-wrap items-center gap-3 mb-6">
+                            <span class="text-sm font-medium">Filtrar por:</span>
+                            <button class="px-3 py-1 bg-indigo-600 text-white rounded-full text-sm">Todos</button>
+                            <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm">Fiscal</button>
+                            <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm">Financeiro</button>
+                            <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm">Legal</button>
+                            <button class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm">Outros</button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="document-card bg-white border border-gray-200 rounded-xl p-5 transition duration-200 hover:shadow-md">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="text-indigo-600">
+                                        <i class="fas fa-file-pdf text-3xl"></i>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <h3 class="font-semibold text-lg mb-1">Nome do Arquivo.pdf</h3>
+                                <p class="text-gray-500 text-sm mb-3">Enviado em: 15/05/2025</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-xs font-medium">Fiscal</span>
+                                    <div class="flex space-x-2">
+                                        <a href="#" class="text-gray-400 hover:text-indigo-600" title="Visualizar">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="text-gray-400 hover:text-indigo-600" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="document-card bg-white border border-gray-200 rounded-xl p-5 transition duration-200 hover:shadow-md">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="text-green-600">
+                                        <i class="fas fa-file-excel text-3xl"></i>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-gray-40

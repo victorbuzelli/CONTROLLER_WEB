@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controller Web | Criar Conta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #800020 0%, #B80F2E 100%); /* Tom de vinho/bordô */
+        }
+        .register-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .logo-container {
+            width: 80px; /* Ajuste o tamanho conforme necessário */
+            height: 80px; /* Ajuste o tamanho conforme necessário */
+            border-radius: 50%;
+            background-color: white; /* Cor de fundo do círculo */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1.5rem; /* Centralizar e adicionar margem abaixo */
+        }
+        .logo-container img {
+            max-width: 70%; /* Ajuste o tamanho da imagem dentro do círculo */
+            max-height: 70%; /* Ajuste o tamanho da imagem dentro do círculo */
+            border-radius: 50%; /* Manter a imagem circular se ela for quadrada */
+        }
+        /* Estilos para as fontes da logo */
+        .logo-font-controller {
+            font-family: 'Montserrat', sans-serif; /* Substitua pela fonte correta */
+            font-weight: 700; /* Ajuste o peso conforme necessário */
+            letter-spacing: 0.05em; /* Ajuste o espaçamento se necessário */
+        }
+        .logo-font-assessoria {
+            font-family: 'Open Sans', sans-serif; /* Substitua pela fonte correta */
+            font-weight: 400; /* Ajuste o peso conforme necessário */
+            letter-spacing: 0.1em; /* Ajuste o espaçamento se necessário */
+            font-size: 0.9rem; /* Ajuste o tamanho se necessário */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div id="register-page" class="gradient-bg min-h-screen flex items-center justify-center p-4">
+        <div class="register-container rounded-xl shadow-2xl p-8 max-w-md w-full text-white">
+            <div class="text-center mb-8">
+                <div class="logo-container">
+                    <img src="/static/images/logo_principal.png" alt="Logo Controller Web">
+                </div>
+                <h1 class="text-3xl font-bold mb-2 logo-font-controller">CONTROLLER</h1>
+                <p class="opacity-80 logo-font-assessoria">Assessoria Contábil</p>
+                <p class="mt-2 text-sm opacity-70">Crie sua conta para acessar o portal</p>
+            </div>
+
+            <form id="register-form" class="space-y-6" method="POST" action="/auth/register">
+                <div>
+                    <label for="email" class="block text-sm font-medium mb-1">Endereço de Email</label>
+                    <input type="email" id="email" name="username" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-white placeholder-white placeholder-opacity-70" placeholder="seu@email.com" required>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium mb-1">Senha</label>
+                    <input type="password" id="password" name="password" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-white placeholder-white placeholder-opacity-70" placeholder="••••••••" required>
+                </div>
+
+                <div>
+                    <label for="google_drive_folder_id" class="block text-sm font-medium mb-1">ID da Pasta Google Drive</label>
+                    <input type="text" id="google_drive_folder_id" name="google_drive_folder_id" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-white placeholder-white placeholder-opacity-70" placeholder="ID da pasta do Google Drive" required>
+                </div>
+
+                <button type="submit" class="w-full bg-white text-indigo-600 py-3 px-4 rounded-lg font-semibold hover:bg-opacity-90 transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-user-plus mr-2"></i> Criar Conta
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <p>Já tem uma conta? <a href="/auth/login" class="font-medium hover:underline">Faça login</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
