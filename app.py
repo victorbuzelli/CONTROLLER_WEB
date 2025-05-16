@@ -1,13 +1,18 @@
+import os
 import json
+import logging
 from io import BytesIO
+
+from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient import http
-import logging
-from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+
 from auth import auth_bp
-from models import User, session
+from models import User
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -18,10 +23,14 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login' # Atualiza o login_view para o blueprint
 
+engine = create_engine('sqlite:///site.db') # Substitua pela sua URL de banco de dados
+Session = sessionmaker(bind=engine)
+
 @login_manager.user_loader
 def load_user(user_id):
-    user = session.query(User).get(int(user_id))
-    return user
+    with Session() as session:
+        user = session.query(User).get(int(user_id))
+        return user
 
 CREDENTIALS_FILE = 'D:\\\\Documentos\\Desktop\\CONTROLLER WEB\\controller-web-879acc97b4a7.json'
 drive_service = None
@@ -68,24 +77,34 @@ def listar_arquivos():
 
 @app.route('/arquivos', methods=['GET'])
 @login_required
-def listar_arquivos():
+def listar_arquivos(folder_id=None):
     print(f"Usuário logado ao acessar /arquivos: {current_user.username}")
-    print(f"ID da pasta do usuário: {current_user.pasta_id}") # VERIFICAÇÃO IMPORTANTE!
-    query = f"'{current_user.pasta_id}' in parents and trashed = false"
+    base_folder_id = current_user.pasta_id
+    parent_folder_id = request.args.get('folder_id', base_folder_id)
+
+    print(f"ID da pasta atual: {parent_folder_id}")
+    query = f"'{parent_folder_id}' in parents and trashed = false"
+    print(f"Consulta enviada para o Google Drive: {query}")
+    files_and_folders = []
+
     if drive_service:
         try:
             results = drive_service.files().list(
                 q=query,
-                fields="nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime)"
+                fields="nextPageToken, files(id, name, mimeType)",
+                includeItemsFromAllDrives=True, # ADICIONE ESTE PARÂMETRO
+                supportsAllDrives=True       # ADICIONE ESTE PARÂMETRO
             ).execute()
-            files = results.get('files', [])
-            return render_template('arquivos.html', documentos=files)
+            files_and_folders = results.get('files', [])
+            print(f"Número de itens retornados pelo Google Drive: {len(files_and_folders)}")
+            print(f"Conteúdo da lista de itens: {files_and_folders}")
+            return render_template('arquivos.html', documentos=files_and_folders, current_folder_id=parent_folder_id)
         except Exception as e:
             print(f"Ocorreu um erro ao acessar o Google Drive: {e}")
-            return render_template('arquivos.html', documentos=[])
+            return render_template('arquivos.html', documentos=[], current_folder_id=parent_folder_id)
     else:
         return jsonify({'message': 'Serviço do Google Drive não inicializado!'}), 500
-
+    
 @app.route('/download/<file_id>', methods=['GET'])
 @login_required
 def download_file(file_id):
