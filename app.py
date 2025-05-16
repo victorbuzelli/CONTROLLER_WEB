@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from io import BytesIO
+from datetime import datetime
 
 from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -98,10 +99,10 @@ def listar_arquivos(folder_id=None):
             files_and_folders = results.get('files', [])
             print(f"Número de itens retornados pelo Google Drive: {len(files_and_folders)}")
             print(f"Conteúdo da lista de itens: {files_and_folders}")
-            return render_template('arquivos.html', documentos=files_and_folders, current_folder_id=parent_folder_id)
+            return render_template('arquivos.html', documentos=files_and_folders, current_folder_id=parent_folder_id, now=datetime.utcnow())
         except Exception as e:
             print(f"Ocorreu um erro ao acessar o Google Drive: {e}")
-            return render_template('arquivos.html', documentos=[], current_folder_id=parent_folder_id)
+            return render_template('arquivos.html', documentos=[], current_folder_id=parent_folder_id, now=datetime.utcnow())
     else:
         return jsonify({'message': 'Serviço do Google Drive não inicializado!'}), 500
     

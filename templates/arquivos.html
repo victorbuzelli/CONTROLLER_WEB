@@ -9,86 +9,75 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='images/logo_principal.png') }}" type="image/png">
     <style>
-        /* Estilos básicos para a logo e layout */
-        .logo-container {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 10px;
-        }
-        .logo-container img {
-            max-width: 80%;
-            max-height: 80%;
-            border-radius: 50%;
-        }
+        /* Estilos adicionais ou sobrescritas */
         .logo-font-controller {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
         }
         .item-card {
-            background-white border border-gray-200 rounded-xl p-5 shadow-md;
+            background-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200; /* Borda mais sutil e efeito hover */
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin-bottom: 0.75rem; /* Mais espaçamento entre os itens */
         }
         .item-info {
             flex-grow: 1;
+            margin-right: 1rem; /* Espaçamento entre info e botão */
         }
         .folder-link {
             display: flex;
             align-items: center;
             text-decoration: none;
             color: inherit;
+            padding: 0.5rem 0; /* Mais espaço para o link */
+            border-radius: 0.25rem;
         }
         .folder-link:hover {
-            background-color: #f3f4f6;
-            border-radius: 0.375rem;
+            background-color: #f9fafa; /* Hover mais suave */
         }
         .download-button {
             display: inline-flex;
             align-items: center;
-            px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2;
+            px-3 py-2 bg-indigo-500 text-white rounded-md text-sm font-medium hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 transition-colors duration-200; /* Cores mais suaves e transição */
         }
         .mr-2 {
             margin-right: 0.5rem;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
-    <div class="flex min-h-screen">
-        <aside class="bg-white w-64 shadow-lg p-4">
-            <div class="flex items-center mb-8">
-                <div class="logo-container">
-                    <img src="/static/images/logo_principal.png" alt="Logo Controller Web">
+<body class="bg-gray-100 min-h-screen font-sans">
+    <div class="flex flex-col min-h-screen">
+        <header class="bg-white shadow-md p-4">
+            <div class="container mx-auto flex items-center justify-start">
+                <div class="logo-container w-10 h-10 mr-2">
+                    <img src="/static/images/logo_principal.png" alt="Logo Controller Web" class="rounded-full">
                 </div>
-                <span class="text-xl font-bold logo-font-controller">CONTROLLER</span>
+                <h1 class="text-xl font-semibold logo-font-controller">CONTROLLER WEB</h1>
             </div>
-            <nav>
-                <a href="/arquivos" class="block py-2 px-4 text-indigo-600 font-semibold">Meus Documentos</a>
-                <a href="/auth/logout" class="block py-2 px-4 text-gray-600 hover:bg-gray-100">Sair</a>
-            </nav>
-        </aside>
+        </header>
 
-        <main class="flex-1 p-6">
-            <h1 class="text-2xl font-semibold mb-4">Meus Documentos</h1>
+        <main class="flex-1 p-6 container mx-auto">
+            <h1 class="text-2xl font-semibold mb-6 text-gray-800">Meus Documentos</h1>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="mb-4">
+                <a href="/arquivos" class="text-indigo-600 hover:underline font-medium"><i class="fas fa-home mr-1"></i> Início</a>
+                </div>
+
+            <div class="space-y-3">
                 {% if documentos %}
                     {% for item in documentos %}
                         <div class="item-card">
                             <div class="item-info">
                                 {% if item.mimeType == 'application/vnd.google-apps.folder' %}
                                     <a href="/arquivos?folder_id={{ item.id }}" class="folder-link">
-                                        <i class="fas fa-folder mr-2"></i> {{ item.name }}
+                                        <i class="fas fa-folder mr-2 text-yellow-500"></i> {{ item.name }}
                                     </a>
                                 {% else %}
-                                    <span><i class="fas fa-file mr-2"></i> {{ item.name }}</span>
-                                    <p class="text-gray-500 text-sm">Criado em: {{ item.createdTime }}</p>
+                                    <span><i class="fas fa-file mr-2 text-gray-600"></i> {{ item.name }}</span>
+                                    <p class="text-gray-500 text-sm mt-1">Criado em: {{ item.createdTime }}</p>
                                 {% endif %}
                             </div>
                             {% if item.mimeType != 'application/vnd.google-apps.folder' %}
@@ -99,10 +88,14 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    <p>Nenhum item encontrado nesta pasta.</p>
+                    <p class="text-gray-700">Nenhum item encontrado nesta pasta.</p>
                 {% endif %}
             </div>
         </main>
+
+        <footer class="bg-gray-200 text-center p-4 text-gray-600 text-sm">
+            <p>&copy; {{ now.year }} Controller Web</p>
+        </footer>
     </div>
 </body>
 </html>
