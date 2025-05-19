@@ -50,14 +50,19 @@
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
     <div class="flex flex-col min-h-screen">
-        <header class="bg-white shadow-md p-4">
-            <div class="container mx-auto flex items-center justify-start">
-                <div class="logo-container w-10 h-10 mr-2">
-                    <img src="/static/images/logo_principal.png" alt="Logo Controller Web" class="rounded-full">
+            <header class="bg-white shadow-md p-4">
+                <div class="container mx-auto flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="logo-container w-10 h-10 mr-2">
+                            <img src="/static/images/logo_principal.png" alt="Logo Controller Web" class="rounded-full">
+                        </div>
+                        <h1 class="text-xl font-semibold logo-font-controller">CONTROLLER WEB</h1>
+                    </div>
+                    <div> <a href="{{ url_for('profile.profile') }}" class="text-gray-600 hover:underline font-medium mr-4">Meu Perfil</a>
+                        <a href="/auth/logout" class="text-gray-600 hover:underline font-medium">Sair</a>
+                    </div>
                 </div>
-                <h1 class="text-xl font-semibold logo-font-controller">CONTROLLER WEB</h1>
-            </div>
-        </header>
+            </header>
 
         <main class="flex-1 p-6 container mx-auto">
             <h1 class="text-2xl font-semibold mb-6 text-gray-800">Meus Documentos</h1>

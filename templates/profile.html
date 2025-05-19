@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil do Usuário - Controller</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="{{ url_for('static', filename='images/logo_principal.png') }}" alt="Logo Controller" class="logo">
+            <h1>Perfil do Usuário</h1>
+        </header>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashed-messages">
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <main>
+            {% if user %}
+                <div class="actions top-actions">
+                    <a href="{{ url_for('listar_arquivos') }}" class="button">Início</a>
+                </div>
+                <p class="greeting">Olá, {{ user.username }}!</p>
+                <p class="info">Seu e-mail é: {{ user.email }}</p>
+                <div class="change-password-section">
+                    <h2>Trocar Senha</h2>
+                    <form method="POST" action="{{ url_for('profile.change_password') }}">
+                        <div class="form-group">
+                            <label for="current_password">Senha Atual:</label>
+                            <input type="password" id="current_password" name="current_password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new_password">Nova Senha:</label>
+                            <input type="password" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirmar Nova Senha:</label>
+                            <input type="password" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <button type="submit" class="button change-password-button">Salvar Nova Senha</button>
+                        {% if password_change_message %}
+                            <p class="{{ password_change_status }}">{{ password_change_message }}</p>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="change-email-section">
+                    <h2>Trocar E-mail</h2>
+                    <form method="POST" action="{{ url_for('profile.change_email') }}">
+                        <div class="form-group">
+                            <label for="current_email">E-mail Atual:</label>
+                            <input type="email" id="current_email" name="current_email" value="{{ user.email }}" readonly>
+                            <small class="form-text text-muted">Seu e-mail atual não pode ser alterado diretamente por segurança.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="new_email">Novo E-mail:</label>
+                            <input type="email" id="new_email" name="new_email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_new_email">Confirmar Novo E-mail:</label>
+                            <input type="email" id="confirm_new_email" name="confirm_new_email" required>
+                        </div>
+                        <button type="submit" class="button change-email-button">Salvar Novo E-mail</button>
+                        {% if email_change_message %}
+                            <p class="{{ email_change_status }}">{{ email_change_message }}</p>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="actions">
+                    <a href="{{ url_for('auth.logout') }}" class="button logout-button">Sair</a>
+                </div>
+            {% else %}
+                <p class="error-message">Usuário não logado.</p>
+            {% endif %}
+        </main>
+        <footer>
+            <p>&copy; Controller - Todos os direitos reservados.</p>
+        </footer>
+    </div>
+</body>
+</html>
