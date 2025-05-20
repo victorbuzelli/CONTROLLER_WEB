@@ -23,16 +23,38 @@ from db import engine, Session, Base
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'super-secret'
-app.config['GOOGLE_CREDENTIALS_FILE'] = 'D:\\\\Documentos\\Desktop\\CONTROLLER WEB\\controller-web-879acc97b4a7.json'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'sua_chave_secreta_de_fallback_para_desenvolvimento_local')
+# A parte ', 'sua_chave_secreta_de_fallback_para_desenvolvimento_local'' é OPCIONAL
+# e serve APENAS para quando você roda o app LOCALMENTE e não tem a variável de ambiente definida.
+# Em produção no Render, ele usará a variável de ambiente que você definiu.
+GOOGLE_CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+drive_service = None
+
+if GOOGLE_CREDENTIALS_JSON:
+    try:
+        creds_info = json.loads(GOOGLE_CREDENTIALS_JSON)
+        credentials = service_account.Credentials.from_service_account_info(
+            creds_info,
+            scopes=['https://www.googleapis.com/auth/drive.readonly']
+        )
+        drive_service = build('drive', 'v3', credentials=credentials)
+    except json.JSONDecodeError:
+        print(f"Erro: Falha ao decodificar a variável de ambiente GOOGLE_CREDENTIALS_JSON.")
+    except Exception as e:
+        print(f"Erro ao carregar as credenciais do Google Drive: {e}")
+else:
+    print("Erro: Variável de ambiente GOOGLE_CREDENTIALS_JSON não encontrada.")
 
 # Configurações do Flask-Mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'victorcontroller8@gmail.com'
-app.config['MAIL_PASSWORD'] = 'rjixwzsvskunxaor'
-app.config['MAIL_DEFAULT_SENDER'] = 'victorcontroller8@gmail.com'
+# Configurações do Flask-Mail
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT')) # Converte para int
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS').lower() == 'true' # Converte para booleano
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL').lower() == 'true' # Converte para booleano
+# -> Adicione estas duas linhas abaixo <-
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER') # Esta já estava lá, mas mantenha-a
 
 mail = Mail(app) # Inicialize o Flask-Mail aqui
 
@@ -60,23 +82,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 login_manager.user_loader(load_user)
-
-CREDENTIALS_FILE = 'D:\\\\Documentos\\Desktop\\CONTROLLER WEB\\controller-web-879acc97b4a7.json'
-drive_service = None
-try:
-    with open(CREDENTIALS_FILE, 'r') as f:
-        creds_info = json.load(f)
-    credentials = service_account.Credentials.from_service_account_info(
-        creds_info,
-        scopes=['https://www.googleapis.com/auth/drive.readonly']
-    )
-    drive_service = build('drive', 'v3', credentials=credentials)
-except FileNotFoundError:
-    print(f"Erro: Arquivo de credenciais não encontrado em: {CREDENTIALS_FILE}")
-except json.JSONDecodeError:
-    print(f"Erro: Falha ao decodificar o arquivo JSON de credenciais.")
-except Exception as e:
-    print(f"Erro ao carregar as credenciais: {e}")
 
 USUARIO_LOGADO = None
 
@@ -136,4 +141,4 @@ if __name__ == '__main__':
         except Exception as e:
             print(f"Erro ao enviar e-mail de teste de inicialização: {e}")'''
 
-    app.run(debug=True) # APENAS ESTA LINHA AQUI NO FINAL
+    app.run(debug=True, port=5000)
