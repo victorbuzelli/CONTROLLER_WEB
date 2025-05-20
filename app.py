@@ -24,7 +24,7 @@ from db import engine, Session, Base
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s') # Mudei para INFO para ver mais logs
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'sua_chave_secreta_de_fallback_para_desenvolvimento_local')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gesspwfmikqqizim') # OK, fallback definido
 
 # --- INICIALIZAÇÃO DO GOOGLE DRIVE (APENAS UMA VEZ E COM DEBUG) ---
 GOOGLE_CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
@@ -59,9 +59,17 @@ print(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
 # --- FIM DA INICIALIZAÇÃO DO GOOGLE DRIVE ---
 
 
-# --- Configurações do Flask-Mail ---
+# --- Configurações do Flask-Mail (Corrigido para evitar duplicação e erro) ---
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT'))
+
+# Este é o lugar CERTO para definir MAIL_PORT de forma robusta
+mail_port_str = os.environ.get('MAIL_PORT', '587') # '587' como fallback em string
+try:
+    app.config['MAIL_PORT'] = int(mail_port_str)
+except ValueError:
+    print(f"DEBUG: MAIL_PORT '{mail_port_str}' não é um número válido. Usando 587 como padrão.")
+    app.config['MAIL_PORT'] = 587 # Valor padrão numérico se a conversão falhar
+
 app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true' # Adiciona fallback para 'true'
 app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'false').lower() == 'true' # Adiciona fallback para 'false'
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
@@ -128,8 +136,6 @@ def verify_email(token):
         user = local_session.query(User).filter_by(email_token=token).first()
 
         if user:
-            # Não é mais necessário verificar user.email_token == token aqui,
-            # pois o filter_by(email_token=token) já garante isso.
             user.email = user.new_email
             user.new_email = None
             user.email_token = None
