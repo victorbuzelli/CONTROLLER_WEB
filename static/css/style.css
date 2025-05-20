@@ -1,170 +1,365 @@
+/* Estilos Gerais */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #F0F8FF;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    background-color: #f8f9fa; /* Fundo suave */
+    color: #333333;
+    line-height: 1.5;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
     min-height: 100vh;
 }
 
-.container {
-    background-color: #FFFFFF;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    width: 90%;
-    max-width: 700px;
-    text-align: center;
+a {
+    text-decoration: none;
+    color: #007bff;
+    transition: color 0.3s ease;
 }
 
-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.logo {
-    max-width: 200px;
-    height: auto;
-    margin-bottom: 15px;
-}
-
-h1 {
-    color: #007BFF;
-    margin-top: 10px;
-}
-
-.greeting {
-    font-size: 1.3em;
-    color: #28A745;
-    margin-bottom: 15px;
-}
-
-.info {
-    color: #6C757D;
-    margin-bottom: 20px;
-}
-
-.actions {
-    margin-top: 30px;
+a:hover {
+    color: #0056b3;
 }
 
 .button {
-    display: inline-block;
-    padding: 12px 25px;
+    padding: 8px 18px;
+    background-color: #333333; /* AJUSTE AQUI: Cor principal da sua logo (cinza escuro/preto) */
+    color: white;
     border: none;
-    border-radius: 5px;
-    text-decoration: none;
-    color: #FFFFFF;
-    background-color: #007BFF;
-    font-size: 1em;
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 0.95em;
     transition: background-color 0.3s ease;
-    margin: 5px;
-}
-
-.logout-button {
-    background-color: #DC3545;
 }
 
 .button:hover {
-    background-color: #0056b3;
+    background-color: #555555; /* AJUSTE AQUI: Um tom um pouco mais claro do seu cinza/preto */
 }
 
-footer {
-    margin-top: 40px;
-    color: #AAAAAA;
+/* --- Estilos para o Cabeçalho (Header) --- */
+header {
+    background-color: #ffffff;
+    padding: 10px 0;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+}
+
+.header-content .button { /* Botão "Início" no header */
+    background-color: #8B0000; /* AJUSTE AQUI: Cor secundária da sua logo (vermelho/vinho) */
+    padding: 8px 15px;
     font-size: 0.9em;
 }
-
-.flashed-messages {
-    margin-bottom: 20px;
-    padding: 10px;
-    border-radius: 5px;
+.header-content .button:hover {
+    background-color: #A00000; /* AJUSTE AQUI: Um tom mais claro do seu vermelho/vinho */
 }
 
-.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+.header-content .logo-principal {
+    height: 45px;
+    margin: 0 15px;
 }
 
-.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-/* Estilos para as seções de troca de senha e e-mail */
-.change-password-section,
-.change-email-section {
-    text-align: left;
-    margin-top: 30px;
-    padding: 20px;
-    border: 1px solid #E0E0E0;
-    border-radius: 5px;
-}
-
-.change-password-section h2,
-.change-email-section h2 {
-    color: #007BFF;
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-
-/* Estilos para os grupos de formulário (label e input) - MANTENHA APENAS ESTE BLOCO */
-.form-group {
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
-    flex-direction: row; /* Colocar label e input na mesma linha */
-    align-items: center; /* Alinhar verticalmente ao centro */
-    margin-bottom: 15px;
+    gap: 20px;
+    align-items: center;
+}
+
+.nav-links a {
+    color: #555;
+    font-weight: 500;
+    font-size: 1em;
+    padding: 4px 0;
+}
+
+.nav-links a:hover {
+    color: #8B0000; /* AJUSTE AQUI: Cor secundária da sua logo no hover dos links */
+}
+
+/* --- Estilos para o Main (Conteúdo Principal da Página de Perfil) --- */
+main {
+    flex-grow: 1;
+    padding: 30px 15px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.profile-container {
+    max-width: 900px; /* Largura máxima um pouco menor */
+    width: 100%;
+    margin: 0;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    /* Remove text-align: center; para permitir alinhamento individual */
+}
+
+.profile-container h1 {
+    color: #333333;
+    margin-bottom: 15px; /* Espaço reduzido */
+    font-size: 2.2em;
+    font-weight: 700;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 10px; /* Padding reduzido */
+    text-align: left; /* Alinha o título à esquerda */
+}
+
+/* Novo container para o texto "Olá, [usuário]!" e "Seu e-mail é:" */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Alinha à esquerda */
+    margin-bottom: 25px; /* Espaço entre as infos do usuário e as seções */
+    padding-left: 5px; /* Pequeno recuo para alinhar com o título */
+}
+
+.user-info p {
+    font-size: 1.05em;
+    color: #555555;
+    margin: 2px 0; /* Espaçamento menor entre as linhas de info */
+    text-align: left; /* Garante alinhamento à esquerda */
+}
+
+/* Container para as seções em coluna (GRID) */
+.profile-sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Continua responsivo */
+    gap: 15px; /* Espaço entre as colunas reduzido */
+    margin-top: 20px; /* Espaço menor */
+}
+
+.profile-section {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px; /* Padding interno um pouco menor */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza horizontalmente o conteúdo da seção */
+    text-align: center; /* Centraliza o texto dentro da seção */
+}
+
+.profile-section h2 {
+    color: #8B0000; /* AJUSTE AQUI: Cor secundária da sua logo para os títulos de seção */
+    font-size: 1.5em;
+    margin-bottom: 15px; /* Espaço reduzido */
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px; /* Padding reduzido */
+    width: 100%;
+}
+
+.profile-pic-display {
+    text-align: center;
+    margin-bottom: 15px; /* Espaço reduzido */
+    position: relative;
+}
+
+.profile-pic {
+    width: 100px; /* Tamanho da foto de perfil principal, ainda menor */
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #333333; /* AJUSTE AQUI: Borda da cor principal da sua logo, mais fina */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* RESOLUÇÃO DA IMAGEM PEQUENA "FOTO DE PERFIL" SOBREPOSTA */
+/* Oculta qualquer imagem extra com alt "Foto de Perfil" */
+.profile-pic-display img[alt="Foto de Perfil"] ~ img[alt="Foto de Perfil"] {
+    display: none !important;
+}
+
+/* Oculta o texto "Foto de Perfil" que está no HTML se for uma label ou um p */
+.profile-section label:has(img[alt="Foto de Perfil"]) {
+    display: none !important;
+}
+/* Se houver um parágrafo <p>Foto de Perfil</p> */
+.profile-section p:has(img[alt="Foto de Perfil"]) {
+    display: none !important;
+}
+/* OU, se for uma label específica ANTES do input file, e você quer ela visível */
+.profile-section label[for="profile_pic"] {
+    display: block !important; /* Certifica que a label "Escolher Nova Foto" aparece */
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 8px;
+    text-align: center;
+    width: 100%;
+    font-size: 0.95em;
+}
+
+
+.form-group {
+    margin-bottom: 12px; /* Espaço menor entre grupos de formulário */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Alinha labels e inputs à esquerda */
+    gap: 5px; /* Espaço entre label e input reduzido */
+    width: 100%;
 }
 
 .form-group label {
     font-weight: bold;
-    margin-bottom: 0; /* Remover a margem inferior da label */
-    margin-right: 15px; /* Adicionar espaço entre a label e o input */
-    color: #333;
-    width: 150px; /* Defina uma largura fixa para os rótulos para alinhamento */
-    text-align: left; /* Alinhar o texto dos rótulos à esquerda */
+    color: #555;
+    text-align: left;
+    font-size: 0.9em; /* Fonte da label menor */
+    margin-bottom: 0; /* Garante que não há margem extra */
+    line-height: 1.2; /* Linha mais compacta */
 }
 
-.form-group input[type="password"],
-.form-group input[type="email"] {
-    padding: 10px;
-    border: 1px solid #CED4DA;
+.form-group .input-field,
+.form-group .input-file {
+    width: 100%;
+    padding: 8px; /* Padding menor nos inputs */
+    border: 1px solid #cccccc;
     border-radius: 4px;
-    font-size: 1em;
-    flex-grow: 1; /* Fazer o input ocupar o espaço restante */
+    font-size: 0.9em; /* Fonte dos inputs menor */
+    box-sizing: border-box;
 }
 
-.form-group .form-text {
-    font-size: 0.8em;
-    color: #6C757D;
-    margin-top: 5px;
-    margin-left: 155px; /* Indentar o texto de ajuda para alinhar com o input */
+.form-group .button {
+    width: 100%;
+    padding: 10px 18px; /* Padding menor no botão */
+    margin-top: 10px; /* Espaço menor acima do botão */
+    background-color: #333333; /* AJUSTE AQUI: Cor principal da sua logo para os botões */
+    font-size: 0.9em; /* Fonte do botão menor */
+    font-weight: bold;
 }
 
-/* Alinhar os botões dos formulários à esquerda */
-.change-password-section button,
-.change-email-section button {
-    display: inline-block;
-    padding: 10px 20px;
-    border: none;
+.form-group .button:hover {
+    background-color: #555555; /* AJUSTE AQUI: Tom mais claro da sua cor principal da logo */
+    transform: translateY(-1px);
+}
+
+/* Estilos específicos para mensagens flash */
+.flashes {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 15px; /* Espaço menor */
+    text-align: center;
+}
+
+.flashes li {
+    padding: 10px; /* Padding menor */
+    margin-bottom: 6px;
     border-radius: 5px;
-    text-decoration: none;
-    color: #FFFFFF;
-    background-color: #007BFF;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 10px;
+    font-size: 0.95em;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
 }
 
-.change-password-section button:hover,
-.change-email-section button:hover {
-    background-color: #0056b3;
+/* Estilos para o Rodapé (Footer) */
+footer {
+    text-align: center;
+    padding: 12px; /* Padding menor no rodapé */
+    margin-top: auto;
+    background-color: #222222;
+    color: #f0f0f0;
+    font-size: 0.8em; /* Fonte ainda menor */
+    box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Ajustes para responsividade */
+@media (max-width: 992px) {
+    .profile-sections-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Colunas ainda menores em telas médias */
+        gap: 12px; /* Espaço menor */
+    }
+
+    .profile-container {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .header-content .button {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+
+    .header-content .logo-principal {
+        margin-bottom: 8px;
+        height: 35px; /* Logo menor */
+    }
+
+    .nav-links {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 8px;
+        gap: 6px;
+    }
+
+    main {
+        padding: 10px; /* Padding menor */
+    }
+
+    .profile-container {
+        padding: 15px;
+    }
+
+    .profile-container h1 {
+        font-size: 1.6em;
+        margin-bottom: 10px;
+    }
+
+    .user-info {
+        margin-bottom: 15px; /* Espaço reduzido */
+    }
+
+    .profile-section {
+        padding: 15px;
+    }
+
+    .profile-section h2 {
+        font-size: 1.2em;
+        margin-bottom: 12px;
+    }
+
+    .profile-pic {
+        width: 80px; /* Foto ainda menor */
+        height: 80px;
+        border-width: 2px; /* Borda mais fina */
+    }
+
+    .form-group {
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+
+    .form-group label {
+        font-size: 0.85em;
+    }
+
+    .form-group .input-field,
+    .form-group .input-file,
+    .form-group .button {
+        padding: 6px; /* Padding ainda menor */
+        font-size: 0.85em;
+    }
+
+    .form-group .button {
+        margin-top: 6px;
+    }
 }
