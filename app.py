@@ -107,7 +107,7 @@ USUARIO_LOGADO = None # Variável global, se ainda for usada
 # --- Rotas Principais ---
 @app.route('/')
 def index():
-    return "Servidor Flask funcionando!"
+    return render_template('index.html')
 
 @app.route('/arquivos', methods=['GET'])
 @login_required
