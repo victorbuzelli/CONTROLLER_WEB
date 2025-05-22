@@ -1,11 +1,13 @@
-const CACHE_NAME = 'controller-web-app-cache-v1';
+const CACHE_NAME = 'controller-web-app-cache-v1'; // Você pode incrementar a versão para garantir que o cache seja atualizado
 const urlsToCache = [
-  '/', // Cache a página inicial
+  '/',
   '/static/css/style.css',
-  '/static/images/logo_principal.png', // Certifique-se de que o nome está correto
-  '/static/manifest.json'
-  // Adicione aqui outros arquivos que seu aplicativo usa e que precisam ser offline
-  // Por exemplo, arquivos JavaScript, outras imagens, etc.
+  '/static/images/logo_principal.png',
+  '/static/manifest.json',
+  '/static/service-worker.js', // Adicione o próprio Service Worker
+  '/static/images/icon-96x96.png', // Adicione o ícone 96x96
+  '/static/images/icon-192x192.png', // Adicione o ícone 192x192
+  '/static/images/icon-512x512.png'  // Adicione o ícone 512x512
 ];
 
 // Instalação do Service Worker: Abre um cache e adiciona os arquivos essenciais
