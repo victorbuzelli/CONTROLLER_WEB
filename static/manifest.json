@@ -8,6 +8,12 @@
   "description": "Seu aplicativo Flask Controller Web",
   "icons": [
     {
+      "src": "/static/images/faviction-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/static/images/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
