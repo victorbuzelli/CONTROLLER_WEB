@@ -12,6 +12,7 @@ from googleapiclient.discovery import build
 from googleapiclient import http
 from whitenoise import WhiteNoise
 from flask_mail import Mail, Message
+from flask import send_from_directory
 
 from auth import auth_bp
 from profile_routes import profile_bp
@@ -59,6 +60,13 @@ else:
 print(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
 # --- FIM DA INICIALIZAÇÃO DO GOOGLE DRIVE ---
 
+@app.route('/service-worker.js')
+def serve_sw():
+    return send_from_directory(app.root_path, 'service-worker.js', mimetype='application/javascript')
+
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'manifest.json', mimetype='application/manifest+json')
 
 # --- Configurações do Flask-Mail (Corrigido para evitar duplicação e erro) ---
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
