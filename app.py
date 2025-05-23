@@ -12,6 +12,7 @@ from googleapiclient import http
 from whitenoise import WhiteNoise
 from flask_mail import Mail, Message
 
+# Importe seus Blueprints
 from auth import auth_bp
 from profile_routes import profile_bp
 from drive_integration import listar_arquivos as listar_arquivos_func, download_file
@@ -25,6 +26,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gesspwfmikqqizim')
 app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(os.path.dirname(__file__), 'static'), prefix="/static/")
 
+# --- INICIALIZAÇÃO DO GOOGLE DRIVE (mantido no topo) ---
 GOOGLE_CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
 drive_service = None
 
@@ -32,7 +34,7 @@ print(f"--- DEBUG: Verificando GOOGLE_CREDENTIALS_JSON (Início do app.py) ---")
 if GOOGLE_CREDENTIALS_JSON:
     print(f"DEBUG: GOOGLE_CREDENTIALS_JSON foi encontrada. Início: {GOOGLE_CREDENTIALS_JSON[:100]}...")
     try:
-        creds_info = json.loads(GOOGLE_CREDENTIALS_JSON)
+        creds_info = json.loads(GOOGLE_CREDENTIAL_JSON)
         print("DEBUG: JSON de credenciais do Google decodificado com sucesso.")
         credentials = service_account.Credentials.from_service_account_info(
             creds_info,
@@ -54,25 +56,25 @@ else:
     drive_service = None
 print(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
 
-# --- ROTAS DE ARQUIVOS ESTÁTICOS ESPECÍFICOS DEVEM VIR ANTES DA ROTA '/' ---
-
+# --- ROTAS DE ARQUIVOS ESPECÍFICOS (SERVICE WORKER, MANIFEST) DEVEM VIR ANTES DA ROTA '/' ---
+# ESTAS DUAS ROTAS SÃO CRÍTICAS PARA O PWA E DEVEM VIR NO TOPO!
 @app.route('/service-worker.js')
 def serve_sw():
+    # Certifique-se de que 'service-worker.js' está na mesma pasta que app.py
     return send_from_directory(app.root_path, 'service-worker.js', mimetype='application/javascript')
 
 @app.route('/manifest.json')
 def serve_manifest():
+    # Assumindo que manifest.json ainda está em 'static/'
     return send_from_directory(os.path.join(app.root_path, 'static'), 'manifest.json', mimetype='application/manifest+json')
 
 # --- APÓS ISSO, VEM A ROTA PRINCIPAL '/' ---
 @app.route('/')
 def index():
-    return render_template('index.html') # Assumindo que seu arquivo principal é 'index.html'
+    # render_template espera que o arquivo esteja na pasta 'templates/'
+    return render_template('index.html') 
 
-
-# --- O RESTO DO SEU CÓDIGO DO app.py CONTINUA AQUI ---
-
-# --- Configurações do Flask-Mail ---
+# --- Configurações do Flask-Mail (mantido aqui) ---
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
 mail_port_str = os.environ.get('MAIL_PORT', '587')
 try:
@@ -99,18 +101,17 @@ def send_verification_email(user, token, new_email):
     except Exception as e:
         flash(f'Erro ao enviar e-mail de verificação: {e}', 'error')
         print(f"Erro ao enviar e-mail de verificação: {e}")
-
 app.send_verification_email = send_verification_email
 
-# --- Configuração do Flask-Login ---
+# --- Configuração do Flask-Login (mantido aqui) ---
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 login_manager.user_loader(load_user)
 
-USUARIO_LOGADO = None
+USUARIO_LOGADO = None # Variável global, se ainda for usada
 
-# --- Rotas Principais (já estavam corretas) ---
+# --- Rotas que exigem login (mantido aqui) ---
 @app.route('/arquivos', methods=['GET'])
 @login_required
 def listar_arquivos_route():
@@ -150,13 +151,14 @@ def verify_email(token):
         local_session.close()
     return redirect(url_for('profile.profile'))
 
-# --- Bloco principal de execução (CORREÇÃO DE DUPLICAÇÃO E ORDEM) ---
+# --- Bloco principal de execução (CORREÇÃO FINAL) ---
 if __name__ == '__main__':
-    # Inicialize o banco de dados e registre os Blueprints APENAS UMA VEZ antes de chamar app.run()
+    # Inicialize o banco de dados e registre os Blueprints APENAS UMA VEZ
+    # e ANTES da chamada app.run()
     Base.metadata.create_all(engine)
     app.register_blueprint(auth_bp)
     app.register_blueprint(profile_bp)
     
-    # Apenas um app.run() para desenvolvimento
-    app.run(debug=True, port=5000) # Se você roda localmente para testes
-    # No Render, ele usa gunicorn ou similar, então esta parte é mais para seu dev local.
+    # Apenas uma chamada para app.run() para desenvolvimento local
+    app.run(debug=True, port=5000)
+    # No Render, ele usa gunicorn ou similar. Esta parte é só para o seu ambiente de dev local.
