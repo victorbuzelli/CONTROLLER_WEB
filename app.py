@@ -24,9 +24,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gesspwfmikqqizim')
+# A ordem aqui também é importante: WhiteNoise deve encapsular o app.wsgi_app
 app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(os.path.dirname(__file__), 'static'), prefix="/static/")
 
-# --- INICIALIZAÇÃO DO GOOGLE DRIVE (mantido no topo) ---
+# --- INICIALIZAÇÃO DO GOOGLE DRIVE (mantido no topo, antes das rotas) ---
 GOOGLE_CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
 drive_service = None
 
@@ -34,7 +35,7 @@ print(f"--- DEBUG: Verificando GOOGLE_CREDENTIALS_JSON (Início do app.py) ---")
 if GOOGLE_CREDENTIALS_JSON:
     print(f"DEBUG: GOOGLE_CREDENTIALS_JSON foi encontrada. Início: {GOOGLE_CREDENTIALS_JSON[:100]}...")
     try:
-        creds_info = json.loads(GOOGLE_CREDENTIAL_JSON)
+        creds_info = json.loads(GOOGLE_CREDENTIALS_JSON) # Corrigi para GOOGLE_CREDENTIALS_JSON, se foi um erro de cópia
         print("DEBUG: JSON de credenciais do Google decodificado com sucesso.")
         credentials = service_account.Credentials.from_service_account_info(
             creds_info,
@@ -57,10 +58,11 @@ else:
 print(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
 
 # --- ROTAS DE ARQUIVOS ESPECÍFICOS (SERVICE WORKER, MANIFEST) DEVEM VIR ANTES DA ROTA '/' ---
-# ESTAS DUAS ROTAS SÃO CRÍTICAS PARA O PWA E DEVEM VIR NO TOPO!
+# ESTAS DUAS ROTAS SÃO CRÍTICAS PARA O PWA E DEVEM VIR O MAIS CEDO POSSÍVEL APÓS A INSTANCIAÇÃO DO APP!
 @app.route('/service-worker.js')
 def serve_sw():
-    # Certifique-se de que 'service-worker.js' está na mesma pasta que app.py
+    # app.root_path é o diretório onde app.py está.
+    # Certifique-se que service-worker.js ESTÁ NESTA PASTA (raiz do projeto)
     return send_from_directory(app.root_path, 'service-worker.js', mimetype='application/javascript')
 
 @app.route('/manifest.json')
@@ -68,13 +70,15 @@ def serve_manifest():
     # Assumindo que manifest.json ainda está em 'static/'
     return send_from_directory(os.path.join(app.root_path, 'static'), 'manifest.json', mimetype='application/manifest+json')
 
-# --- APÓS ISSO, VEM A ROTA PRINCIPAL '/' ---
+# --- AGORA A ROTA PRINCIPAL '/' PODE VIR ---
 @app.route('/')
 def index():
     # render_template espera que o arquivo esteja na pasta 'templates/'
     return render_template('index.html') 
 
-# --- Configurações do Flask-Mail (mantido aqui) ---
+# --- O RESTO DO SEU CÓDIGO DO app.py CONTINUA AQUI (sem mudanças de ordem drásticas) ---
+
+# --- Configurações do Flask-Mail ---
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
 mail_port_str = os.environ.get('MAIL_PORT', '587')
 try:
@@ -103,13 +107,13 @@ def send_verification_email(user, token, new_email):
         print(f"Erro ao enviar e-mail de verificação: {e}")
 app.send_verification_email = send_verification_email
 
-# --- Configuração do Flask-Login (mantido aqui) ---
+# --- Configuração do Flask-Login ---
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 login_manager.user_loader(load_user)
 
-USUARIO_LOGADO = None # Variável global, se ainda for usada
+USUARIO_LOGADO = None
 
 # --- Rotas que exigem login (mantido aqui) ---
 @app.route('/arquivos', methods=['GET'])
@@ -151,7 +155,7 @@ def verify_email(token):
         local_session.close()
     return redirect(url_for('profile.profile'))
 
-# --- Bloco principal de execução (CORREÇÃO FINAL) ---
+# --- Bloco principal de execução (CORREÇÃO FINAL e SINTAXE) ---
 if __name__ == '__main__':
     # Inicialize o banco de dados e registre os Blueprints APENAS UMA VEZ
     # e ANTES da chamada app.run()
@@ -159,6 +163,7 @@ if __name__ == '__main__':
     app.register_blueprint(auth_bp)
     app.register_blueprint(profile_bp)
     
-    # Apenas uma chamada para app.run() para desenvolvimento local
+    # Esta linha app.run() é apenas para testes locais.
+    # No Render, ele usa gunicorn ou um servidor WSGI similar.
+    # Certifique-se que seu 'Procfile' no Render está configurado corretamente (ex: web: gunicorn app:app)
     app.run(debug=True, port=5000)
-    # No Render, ele usa gunicorn ou similar. Esta parte é só para o seu ambiente de dev local.
