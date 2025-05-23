@@ -4,15 +4,13 @@ import logging
 from io import BytesIO
 from datetime import datetime
 
-# Garanta que todas as importações necessárias do Flask estejam aqui
-from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect, url_for, flash, current_app
+from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect, url_for, flash, current_app, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient import http
 from whitenoise import WhiteNoise
 from flask_mail import Mail, Message
-from flask import send_from_directory
 
 from auth import auth_bp
 from profile_routes import profile_bp
@@ -21,14 +19,12 @@ from database_utils import load_user
 from models import User
 from db import engine, Session, Base
 
-# Configuração de logging para facilitar a depuração no Render
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s') # Mudei para INFO para ver mais logs
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gesspwfmikqqizim') # OK, fallback definido
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gesspwfmikqqizim')
 app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(os.path.dirname(__file__), 'static'), prefix="/static/")
 
-# --- INICIALIZAÇÃO DO GOOGLE DRIVE (APENAS UMA VEZ E COM DEBUG) ---
 GOOGLE_CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
 drive_service = None
 
@@ -46,19 +42,19 @@ if GOOGLE_CREDENTIALS_JSON:
         print("DEBUG: Serviço do Google Drive construído com sucesso.")
     except json.JSONDecodeError as e:
         print(f"DEBUG: Erro ao decodificar GOOGLE_CREDENTIALS_JSON. O valor não é um JSON válido: {e}")
-        # print(f"DEBUG: Valor recebido: {GOOGLE_CREDENTIALS_JSON}") # CUIDADO: Pode expor credenciais em logs públicos
         print(f"Erro: Falha ao decodificar a variável de ambiente GOOGLE_CREDENTIALS_JSON.")
-        drive_service = None # Garante que drive_service é None em caso de falha na decodificação
+        drive_service = None
     except Exception as e:
         print(f"DEBUG: Erro geral ao carregar credenciais (fora de JSONDecodeError): {e}")
         print(f"Erro ao carregar as credenciais do Google Drive: {e}")
-        drive_service = None # Garante que drive_service é None em caso de falha geral
+        drive_service = None
 else:
     print("DEBUG: GOOGLE_CREDENTIALS_JSON não foi encontrada (valor é None ou vazio).")
     print("Erro: Variável de ambiente GOOGLE_CREDENTIALS_JSON não encontrada.")
-    drive_service = None # Garante que drive_service é None se a variável não for encontrada
+    drive_service = None
 print(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
-# --- FIM DA INICIALIZAÇÃO DO GOOGLE DRIVE ---
+
+# --- ROTAS DE ARQUIVOS ESTÁTICOS ESPECÍFICOS DEVEM VIR ANTES DA ROTA '/' ---
 
 @app.route('/service-worker.js')
 def serve_sw():
@@ -68,28 +64,30 @@ def serve_sw():
 def serve_manifest():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'manifest.json', mimetype='application/manifest+json')
 
-# --- Configurações do Flask-Mail (Corrigido para evitar duplicação e erro) ---
-app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
+# --- APÓS ISSO, VEM A ROTA PRINCIPAL '/' ---
+@app.route('/')
+def index():
+    return render_template('index.html') # Assumindo que seu arquivo principal é 'index.html'
 
-# Este é o lugar CERTO para definir MAIL_PORT de forma robusta
-mail_port_str = os.environ.get('MAIL_PORT', '587') # '587' como fallback em string
+
+# --- O RESTO DO SEU CÓDIGO DO app.py CONTINUA AQUI ---
+
+# --- Configurações do Flask-Mail ---
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
+mail_port_str = os.environ.get('MAIL_PORT', '587')
 try:
     app.config['MAIL_PORT'] = int(mail_port_str)
 except ValueError:
     print(f"DEBUG: MAIL_PORT '{mail_port_str}' não é um número válido. Usando 587 como padrão.")
-    app.config['MAIL_PORT'] = 587 # Valor padrão numérico se a conversão falhar
-
-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true' # Adiciona fallback para 'true'
-app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'false').lower() == 'true' # Adiciona fallback para 'false'
+    app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'false').lower() == 'true'
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
+mail = Mail(app)
 
-mail = Mail(app) # Inicialize o Flask-Mail aqui
-
-# Função de envio de e-mail
 def send_verification_email(user, token, new_email):
-    # Usamos 'app.config.get' pois 'app' é globalmente acessível neste escopo do módulo
     msg = Message('Verifique seu novo endereço de e-mail',
                   sender=app.config.get('MAIL_DEFAULT_SENDER'),
                   recipients=[new_email])
@@ -102,7 +100,6 @@ def send_verification_email(user, token, new_email):
         flash(f'Erro ao enviar e-mail de verificação: {e}', 'error')
         print(f"Erro ao enviar e-mail de verificação: {e}")
 
-# Anexa a função send_verification_email ao objeto 'app'
 app.send_verification_email = send_verification_email
 
 # --- Configuração do Flask-Login ---
@@ -111,23 +108,17 @@ login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 login_manager.user_loader(load_user)
 
-USUARIO_LOGADO = None # Variável global, se ainda for usada
+USUARIO_LOGADO = None
 
-# --- Rotas Principais ---
-@app.route('/')
-def index():
-    return render_template('index.html')
-
+# --- Rotas Principais (já estavam corretas) ---
 @app.route('/arquivos', methods=['GET'])
 @login_required
 def listar_arquivos_route():
-    # Verifica se drive_service foi inicializado com sucesso
     if drive_service:
         return listar_arquivos_func(drive_service)
     else:
-        # Retorna uma mensagem de erro ou redireciona se o serviço não estiver pronto
         flash('Erro: Serviço do Google Drive não disponível.', 'error')
-        return redirect(url_for('profile.profile')) # Ou render_template de uma página de erro
+        return redirect(url_for('profile.profile'))
 
 @app.route('/download/<file_id>', methods=['GET'])
 @login_required
@@ -136,14 +127,13 @@ def download_route(file_id):
         return download_file(drive_service, file_id)
     else:
         flash('Erro: Serviço do Google Drive não disponível para download.', 'error')
-        return redirect(url_for('profile.profile')) # Ou render_template de uma página de erro
+        return redirect(url_for('profile.profile'))
 
 @app.route('/verify_email/<token>')
 def verify_email(token):
     local_session = Session()
     try:
         user = local_session.query(User).filter_by(email_token=token).first()
-
         if user:
             user.email = user.new_email
             user.new_email = None
@@ -153,20 +143,20 @@ def verify_email(token):
         else:
             flash('Link de verificação inválido ou usuário não encontrado.', 'error')
     except Exception as e:
-        local_session.rollback() # Garante rollback em caso de erro na DB
+        local_session.rollback()
         print(f"Erro ao verificar e-mail: {e}")
         flash(f'Ocorreu um erro ao verificar seu e-mail: {e}', 'error')
     finally:
         local_session.close()
-
     return redirect(url_for('profile.profile'))
 
-# --- Bloco principal de execução ---
+# --- Bloco principal de execução (CORREÇÃO DE DUPLICAÇÃO E ORDEM) ---
 if __name__ == '__main__':
-    # Cria as tabelas se não existirem
+    # Inicialize o banco de dados e registre os Blueprints APENAS UMA VEZ antes de chamar app.run()
     Base.metadata.create_all(engine)
-
-    # Registra os Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(profile_bp)
-    app.run(debug=True, port=5000)
+    
+    # Apenas um app.run() para desenvolvimento
+    app.run(debug=True, port=5000) # Se você roda localmente para testes
+    # No Render, ele usa gunicorn ou similar, então esta parte é mais para seu dev local.
