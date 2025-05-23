@@ -70,6 +70,10 @@ def serve_manifest():
     # Assumindo que manifest.json ainda está em 'static/'
     return send_from_directory(os.path.join(app.root_path, 'static'), 'manifest.json', mimetype='application/manifest+json')
 
+@app.route('/.well-known/assetlinks.json')
+def serve_assetlinks():
+    return send_from_directory(os.path.join(app.root_path, '.well-known'), 'assetlinks.json', mimetype='application/json')
+
 # --- AGORA A ROTA PRINCIPAL '/' PODE VIR ---
 @app.route('/')
 def index():
