@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.victormd.controllerwebapp",
+    "sha256_cert_fingerprints": ["E7:40:53:C9:2E:70:E1:FB:DF:5F:B2:7D:6F:A2:3B:56:88:EC:39:66:E8:42:07:9F:C8:F1:C9:60:5C:38:CE:69"]
+  }
+}]
