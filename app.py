@@ -87,6 +87,15 @@ def index():
 def delete_account_policy():
     return render_template('delete_account_policy.html')
 
+# Rota para a Política de Privacidade
+@app.route('/privacy-policy')
+def privacy_policy():
+    """
+    Exibe a página da política de privacidade.
+    Esta página deve conter o texto gerado por um gerador de políticas de privacidade.
+    """
+    return render_template('privacy_policy.html')
+
 # --- Configurações do Flask-Mail ---
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
 mail_port_str = os.environ.get('MAIL_PORT', '587')
