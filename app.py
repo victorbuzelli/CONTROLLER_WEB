@@ -4,6 +4,7 @@ import logging
 from io import BytesIO
 from datetime import datetime
 
+# Importações de módulos Flask e outros
 from flask import Flask, request, jsonify, send_file, make_response, render_template, redirect, url_for, flash, current_app, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from google.oauth2 import service_account
@@ -12,7 +13,7 @@ from googleapiclient import http
 from whitenoise import WhiteNoise
 from flask_mail import Mail, Message
 
-# Importe seus Blueprints
+# Importa seus Blueprints. Isso significa que as rotas de auth e profile estão em outros arquivos.
 from auth import auth_bp
 from profile_routes import profile_bp
 from drive_integration import listar_arquivos as listar_arquivos_func, download_file
@@ -20,14 +21,21 @@ from database_utils import load_user
 from models import User
 from db import engine, Session, Base
 
+# Configuração básica de logging para depuração
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Inicializa o aplicativo Flask
 app = Flask(__name__)
+# Configura a chave secreta para segurança de sessão e outras funcionalidades
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gesspwfmikqqizim')
-# A ordem aqui também é importante: WhiteNoise deve encapsular o app.wsgi_app
+
+# Configura o WhiteNoise para servir arquivos estáticos de forma eficiente no ambiente de produção (Render)
+# Ele encapsula o WSGI app do Flask e serve arquivos da pasta 'static'.
 app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(os.path.dirname(__file__), 'static'), prefix="/static/")
 
-# --- INICIALIZAÇÃO DO GOOGLE DRIVE (mantido no topo, antes das rotas) ---
+# --- INICIALIZAÇÃO DO GOOGLE DRIVE ---
+# Carrega as credenciais do Google Drive de uma variável de ambiente JSON.
+# Isso é crucial para a integração do app com o Drive para listar e baixar arquivos.
 GOOGLE_CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
 drive_service = None
 
@@ -35,12 +43,15 @@ print(f"--- DEBUG: Verificando GOOGLE_CREDENTIALS_JSON (Início do app.py) ---")
 if GOOGLE_CREDENTIALS_JSON:
     print(f"DEBUG: GOOGLE_CREDENTIALS_JSON foi encontrada. Início: {GOOGLE_CREDENTIALS_JSON[:100]}...")
     try:
-        creds_info = json.loads(GOOGLE_CREDENTIALS_JSON) # Corrigi para GOOGLE_CREDENTIALS_JSON, se foi um erro de cópia
+        # Tenta decodificar a string JSON das credenciais
+        creds_info = json.loads(GOOGLE_CREDENTIALS_JSON)
         print("DEBUG: JSON de credenciais do Google decodificado com sucesso.")
+        # Cria credenciais de serviço a partir das informações e define os escopos de acesso ao Drive (somente leitura)
         credentials = service_account.Credentials.from_service_account_info(
             creds_info,
             scopes=['https://www.googleapis.com/auth/drive.readonly']
         )
+        # Constrói o serviço do Google Drive API v3
         drive_service = build('drive', 'v3', credentials=credentials)
         print("DEBUG: Serviço do Google Drive construído com sucesso.")
     except json.JSONDecodeError as e:
@@ -57,46 +68,43 @@ else:
     drive_service = None
 print(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
 
-# --- ROTAS DE ARQUIVOS ESPECÍFICOS (SERVICE WORKER, MANIFEST) DEVEM VIR ANTES DA ROTA '/' ---
-# ESTAS DUAS ROTAS SÃO CRÍTICAS PARA O PWA E DEVEM VIR O MAIS CEDO POSSÍVEL APÓS A INSTANCIAÇÃO DO APP!
+# --- ROTAS DE ARQUIVOS ESPECÍFICOS (SERVICE WORKER, MANIFEST) ---
+# Estas rotas servem arquivos essenciais para o funcionamento do PWA.
+# Elas devem vir antes da rota principal '/' para garantir que sejam encontradas primeiro.
 @app.route('/service-worker.js')
 def serve_sw():
-    # app.root_path é o diretório onde app.py está.
-    # Certifique-se que service-worker.js ESTÁ NESTA PASTA (raiz do projeto)
+    # Serve o arquivo service-worker.js, que está na raiz do projeto (app.root_path)
     return send_from_directory(app.root_path, 'service-worker.js', mimetype='application/javascript')
 
 @app.route('/manifest.json')
 def serve_manifest():
-    # Assumindo que manifest.json ainda está em 'static/'
+    # Serve o arquivo manifest.json, que está na pasta 'static/'
     return send_from_directory(os.path.join(app.root_path, 'static'), 'manifest.json', mimetype='application/manifest+json')
 
-@app.route('/.well-known/assetlinks.json') # <--- ROTA ORIGINAL
+@app.route('/.well-known/assetlinks.json')
 def serve_assetlinks():
+    # Serve o arquivo assetlinks.json, necessário para Trusted Web Activities (TWAs)
     return send_from_directory(os.path.join(app.root_path, '.well-known'), 'assetlinks.json', mimetype='application/json')
 
-
-# --- AGORA A ROTA PRINCIPAL '/' PODE VIR ---
+# --- ROTA PRINCIPAL ---
 @app.route('/')
 def index():
-    # render_template espera que o arquivo esteja na pasta 'templates/'
-    return render_template('index.html') 
+    # Renderiza o template 'index.html' para a página inicial do aplicativo
+    return render_template('index.html')
 
-# --- O RESTO DO SEU CÓDIGO DO app.py CONTINUA AQUI (sem mudanças de ordem drásticas) ---
-
+# --- ROTAS DE POLÍTICAS ---
 @app.route('/delete-account-policy')
 def delete_account_policy():
+    # Renderiza o template para a política de exclusão de conta
     return render_template('delete_account_policy.html')
 
-# Rota para a Política de Privacidade
 @app.route('/privacy-policy')
 def privacy_policy():
-    """
-    Exibe a página da política de privacidade.
-    Esta página deve conter o texto gerado por um gerador de políticas de privacidade.
-    """
+    # Renderiza o template para a política de privacidade
     return render_template('privacy_policy.html')
 
 # --- Configurações do Flask-Mail ---
+# Carrega as configurações de e-mail de variáveis de ambiente para envio de e-mails de verificação
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
 mail_port_str = os.environ.get('MAIL_PORT', '587')
 try:
@@ -111,6 +119,7 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
 mail = Mail(app)
 
+# Função para enviar e-mail de verificação (usada no fluxo de alteração de e-mail)
 def send_verification_email(user, token, new_email):
     msg = Message('Verifique seu novo endereço de e-mail',
                   sender=app.config.get('MAIL_DEFAULT_SENDER'),
@@ -126,34 +135,52 @@ def send_verification_email(user, token, new_email):
 app.send_verification_email = send_verification_email
 
 # --- Configuração do Flask-Login ---
+# Inicializa o Flask-Login para gerenciar sessões de usuário.
 login_manager = LoginManager()
 login_manager.init_app(app)
+# Define a rota para a qual o usuário será redirecionado se tentar acessar uma página protegida sem estar logado.
+# 'auth.login' significa a função 'login' dentro do Blueprint 'auth'.
 login_manager.login_view = 'auth.login'
+# Define a função para recarregar o usuário a partir do ID na sessão.
 login_manager.user_loader(load_user)
 
-USUARIO_LOGADO = None
+USUARIO_LOGADO = None # Esta variável global pode não ser necessária se você usar current_user do Flask-Login.
 
-# --- Rotas que exigem login (mantido aqui) ---
+# --- REGISTRO DOS BLUEPRINTS (MOVIDO PARA AQUI) ---
+# ESTE É O PONTO CRÍTICO. Estas linhas DEVEM estar fora do if __name__ == '__main__':
+# para garantir que os Blueprints sejam registrados quando o Gunicorn (ou outro servidor WSGI)
+# importa o aplicativo no ambiente de produção (Render).
+print("--- DEBUG: Antes de registrar auth_bp em app.py (AGORA FORA DO if __name__) ---")
+app.register_blueprint(auth_bp)
+print("--- DEBUG: auth_bp registrado com sucesso em app.py ---")
+
+print("--- DEBUG: Antes de registrar profile_bp em app.py (AGORA FORA DO if __name__) ---")
+app.register_blueprint(profile_bp)
+print("--- DEBUG: profile_bp registrado com sucesso em app.py ---")
+
+
+# --- Rotas que exigem login (Protegidas por @login_required) ---
 @app.route('/arquivos', methods=['GET'])
-@login_required
+@login_required # Esta rota só pode ser acessada por usuários logados.
 def listar_arquivos_route():
     if drive_service:
         return listar_arquivos_func(drive_service)
     else:
         flash('Erro: Serviço do Google Drive não disponível.', 'error')
-        return redirect(url_for('profile.profile'))
+        return redirect(url_for('profile.profile')) # Redireciona para o perfil se o Drive não estiver disponível
 
 @app.route('/download/<file_id>', methods=['GET'])
-@login_required
+@login_required # Esta rota só pode ser acessada por usuários logados.
 def download_route(file_id):
     if drive_service:
         return download_file(drive_service, file_id)
     else:
         flash('Erro: Serviço do Google Drive não disponível para download.', 'error')
-        return redirect(url_for('profile.profile'))
+        return redirect(url_for('profile.profile')) # Redireciona para o perfil se o Drive não estiver disponível
 
 @app.route('/verify_email/<token>')
 def verify_email(token):
+    # Rota para verificar e-mail (usada no fluxo de alteração de e-mail)
     local_session = Session()
     try:
         user = local_session.query(User).filter_by(email_token=token).first()
@@ -173,15 +200,15 @@ def verify_email(token):
         local_session.close()
     return redirect(url_for('profile.profile'))
 
-# --- Bloco principal de execução (CORREÇÃO FINAL e SINTAXE) ---
+# --- Bloco principal de execução (apenas para execução local) ---
 if __name__ == '__main__':
-    # Inicialize o banco de dados e registre os Blueprints APENAS UMA VEZ
-    # e ANTES da chamada app.run()
+    # Inicializa o banco de dados. Mantenha isso aqui se só for criar as tabelas no ambiente local.
     Base.metadata.create_all(engine)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(profile_bp)
     
-    # Esta linha app.run() é apenas para testes locais.
-    # No Render, ele usa gunicorn ou um servidor WSGI similar.
+    # As linhas app.register_blueprint() FORAM REMOVIDAS DAQUI
+    # Elas foram movidas para fora deste bloco para que sejam executadas no Render também.
+
+    # Esta linha app.run() é usada apenas para testes locais.
+    # No ambiente de produção (Render), o servidor WSGI (como Gunicorn) gerencia a execução do aplicativo.
     # Certifique-se que seu 'Procfile' no Render está configurado corretamente (ex: web: gunicorn app:app)
     app.run(debug=True, port=5000)
