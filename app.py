@@ -83,6 +83,10 @@ def index():
 
 # --- O RESTO DO SEU CÓDIGO DO app.py CONTINUA AQUI (sem mudanças de ordem drásticas) ---
 
+@app.route('/delete-account-policy')
+def delete_account_policy():
+    return render_template('delete_account_policy.html')
+
 # --- Configurações do Flask-Mail ---
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
 mail_port_str = os.environ.get('MAIL_PORT', '587')
