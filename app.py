@@ -146,17 +146,24 @@ login_manager.user_loader(load_user)
 
 USUARIO_LOGADO = None # Esta variável global pode não ser necessária se você usar current_user do Flask-Login.
 
-# --- REGISTRO DOS BLUEPRINTS (MOVIDO PARA AQUI) ---
+# --- REGISTRO DOS BLUEPRINTS ---
 # ESTE É O PONTO CRÍTICO. Estas linhas DEVEM estar fora do if __name__ == '__main__':
 # para garantir que os Blueprints sejam registrados quando o Gunicorn (ou outro servidor WSGI)
 # importa o aplicativo no ambiente de produção (Render).
-print("--- DEBUG: Antes de registrar auth_bp em app.py (AGORA FORA DO if __name__) ---")
+print("--- DEBUG: Antes de registrar auth_bp em app.py ---")
 app.register_blueprint(auth_bp)
 print("--- DEBUG: auth_bp registrado com sucesso em app.py ---")
 
-print("--- DEBUG: Antes de registrar profile_bp em app.py (AGORA FORA DO if __name__) ---")
+print("--- DEBUG: Antes de registrar profile_bp em app.py ---")
 app.register_blueprint(profile_bp)
 print("--- DEBUG: profile_bp registrado com sucesso em app.py ---")
+
+# --- INICIALIZAÇÃO DO BANCO DE DADOS (MOVIDO PARA CÁ) ---
+# Esta linha agora será executada quando o Gunicorn importar o app,
+# garantindo que as tabelas sejam criadas no ambiente de produção.
+print("--- DEBUG: Criando tabelas do banco de dados (Base.metadata.create_all) ---")
+Base.metadata.create_all(engine)
+print("--- DEBUG: Tabelas do banco de dados criadas (ou já existentes) ---")
 
 
 # --- Rotas que exigem login (Protegidas por @login_required) ---
@@ -202,12 +209,9 @@ def verify_email(token):
 
 # --- Bloco principal de execução (apenas para execução local) ---
 if __name__ == '__main__':
-    # Inicializa o banco de dados. Mantenha isso aqui se só for criar as tabelas no ambiente local.
-    Base.metadata.create_all(engine)
+    # A linha Base.metadata.create_all(engine) FOI REMOVIDA DAQUI.
+    # Ela foi movida para o topo do script (fora do if __name__) para ser executada sempre.
     
-    # As linhas app.register_blueprint() FORAM REMOVIDAS DAQUI
-    # Elas foram movidas para fora deste bloco para que sejam executadas no Render também.
-
     # Esta linha app.run() é usada apenas para testes locais.
     # No ambiente de produção (Render), o servidor WSGI (como Gunicorn) gerencia a execução do aplicativo.
     # Certifique-se que seu 'Procfile' no Render está configurado corretamente (ex: web: gunicorn app:app)
