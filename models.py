@@ -13,7 +13,7 @@ class User(Base, UserMixin):
     id = Column(Integer, primary_key=True)
     email = Column(String(120), unique=True, nullable=False)
     username = Column(String(80), unique=True, nullable=False) # Adicionei nullable=False se ainda não tiver
-    senha_hash = Column(String(128), nullable=False)
+    senha_hash = Column(String(255), nullable=False)
     pasta_id = Column(String(255), nullable=True) # ID da pasta do Google Drive
     new_email = Column(String(120), nullable=True)
     email_token = Column(String(255), nullable=True)
