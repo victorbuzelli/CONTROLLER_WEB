@@ -22,7 +22,7 @@ from drive_integration import listar_arquivos as listar_arquivos_func, download_
 # Isso garante que o SQLAlchemy as "conheça" antes de tentar criar as tabelas.
 # Se você tem apenas a classe User, mantenha como está.
 # Se tiver outras (ex: Company), adicione-as: from models import User, Company
-from models import User
+from models import User # Mantenha esta linha
 from database_utils import load_user
 from db import engine, Session, Base # Importa o que você definiu em db.py
 from sqlalchemy import text # Importa 'text' para executar SQL puro
@@ -171,9 +171,20 @@ logging.info("--- DEBUG: profile_bp registrado com sucesso em app.py ---")
 # para garantir que seja executado no contexto correto e logue falhas.
 with app.app_context():
     try:
+        # NOVO: Tenta apagar e recriar o esquema 'public' para garantir um ambiente limpo.
+        # Isso é uma medida agressiva de depuração para o problema de tabelas não encontradas.
+        with engine.connect() as connection:
+            # Primeiro, tenta apagar o esquema 'public' e tudo dentro dele
+            logging.info("--- DEBUG: Tentando apagar esquema 'public' (se existir) ---")
+            connection.execute(text("DROP SCHEMA IF EXISTS public CASCADE;"))
+            # Em seguida, recria o esquema 'public'
+            logging.info("--- DEBUG: Tentando recriar esquema 'public' ---")
+            connection.execute(text("CREATE SCHEMA public;"))
+            connection.commit() # Commit das operações DDL
+
         logging.info("--- DEBUG: Tentando criar tabelas do banco de dados (Base.metadata.create_all) ---")
         # Força a criação das tabelas no esquema 'public'
-        Base.metadata.create_all(engine, checkfirst=True) # checkfirst=True evita recriar se já existe
+        Base.metadata.create_all(engine) # checkfirst=True não é tão necessário após DROP SCHEMA
         logging.info("--- DEBUG: Tabelas do banco de dados criadas com sucesso ou já existentes. ---")
 
         # NOVO: Verificação explícita da existência da tabela 'users'
