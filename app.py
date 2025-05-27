@@ -25,6 +25,7 @@ from drive_integration import listar_arquivos as listar_arquivos_func, download_
 from models import User
 from database_utils import load_user
 from db import engine, Session, Base # Importa o que você definiu em db.py
+from sqlalchemy import text # Importa 'text' para executar SQL puro
 
 # Configuração básica de logging para depuração
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -171,8 +172,21 @@ logging.info("--- DEBUG: profile_bp registrado com sucesso em app.py ---")
 with app.app_context():
     try:
         logging.info("--- DEBUG: Tentando criar tabelas do banco de dados (Base.metadata.create_all) ---")
-        Base.metadata.create_all(engine) # Aqui as tabelas são criadas
+        # Força a criação das tabelas no esquema 'public'
+        Base.metadata.create_all(engine, checkfirst=True) # checkfirst=True evita recriar se já existe
         logging.info("--- DEBUG: Tabelas do banco de dados criadas com sucesso ou já existentes. ---")
+
+        # NOVO: Verificação explícita da existência da tabela 'users'
+        with engine.connect() as connection:
+            result = connection.execute(text("SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'users');")).scalar()
+            if result:
+                logging.info("--- DEBUG: Tabela 'users' encontrada no esquema 'public' após create_all. ---")
+            else:
+                logging.error("--- ERRO CRÍTICO: Tabela 'users' NÃO encontrada no esquema 'public' após create_all. ---")
+                # Se isso acontecer, o problema é mais profundo.
+                # Pode ser que o usuário do DB não tenha permissão para criar ou ver a tabela.
+                # Ou que a conexão esteja em um estado estranho.
+
     except Exception as e:
         logging.error(f"--- ERRO: Falha ao criar tabelas do banco de dados: {e} ---")
         # Dependendo da severidade, você pode querer que o app falhe se as tabelas não forem criadas
