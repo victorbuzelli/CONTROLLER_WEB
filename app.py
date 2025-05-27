@@ -18,11 +18,13 @@ from auth import auth_bp
 from profile_routes import profile_bp
 from drive_integration import listar_arquivos as listar_arquivos_func, download_file
 
-# IMPORTANTE: Garanta que TODOS os seus modelos (User, Company, etc.) estejam importados aqui
-# Isso garante que o SQLAlchemy os "conheça" antes de tentar criar as tabelas.
-from models import User # Se tiver outras classes de modelo, importe-as também: , Company, Product
+# IMPORTANTE: Importe TODAS as suas classes de modelo AQUI do models.py.
+# Isso garante que o SQLAlchemy as "conheça" antes de tentar criar as tabelas.
+# Se você tem apenas a classe User, mantenha como está.
+# Se tiver outras (ex: Company), adicione-as: from models import User, Company
+from models import User
 from database_utils import load_user
-from db import engine, Session, Base # Importar o que você definiu em db.py
+from db import engine, Session, Base # Importa o que você definiu em db.py
 
 # Configuração básica de logging para depuração
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -42,13 +44,14 @@ app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(os.path.dirname(__file
 GOOGLE_CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
 drive_service = None
 
-print(f"--- DEBUG: Verificando GOOGLE_CREDENTIALS_JSON (Início do app.py) ---")
+# Removi os "print" antigos e usei logging.info para padronizar
+logging.info("--- DEBUG: Verificando GOOGLE_CREDENTIALS_JSON (Início do app.py) ---")
 if GOOGLE_CREDENTIALS_JSON:
-    print(f"DEBUG: GOOGLE_CREDENTIALS_JSON foi encontrada. Início: {GOOGLE_CREDENTIALS_JSON[:100]}...")
+    logging.info(f"DEBUG: GOOGLE_CREDENTIALS_JSON foi encontrada. Início: {GOOGLE_CREDENTIALS_JSON[:100]}...")
     try:
         # Tenta decodificar a string JSON das credenciais
         creds_info = json.loads(GOOGLE_CREDENTIALS_JSON)
-        print("DEBUG: JSON de credenciais do Google decodificado com sucesso.")
+        logging.info("DEBUG: JSON de credenciais do Google decodificado com sucesso.")
         # Cria credenciais de serviço a partir das informações e define os escopos de acesso ao Drive (somente leitura)
         credentials = service_account.Credentials.from_service_account_info(
             creds_info,
@@ -56,20 +59,20 @@ if GOOGLE_CREDENTIALS_JSON:
         )
         # Constrói o serviço do Google Drive API v3
         drive_service = build('drive', 'v3', credentials=credentials)
-        print("DEBUG: Serviço do Google Drive construído com sucesso.")
+        logging.info("DEBUG: Serviço do Google Drive construído com sucesso.")
     except json.JSONDecodeError as e:
-        print(f"DEBUG: Erro ao decodificar GOOGLE_CREDENTIALS_JSON. O valor não é um JSON válido: {e}")
-        print(f"Erro: Falha ao decodificar a variável de ambiente GOOGLE_CREDENTIALS_JSON.")
+        logging.error(f"DEBUG: Erro ao decodificar GOOGLE_CREDENTIALS_JSON. O valor não é um JSON válido: {e}")
+        logging.error(f"Erro: Falha ao decodificar a variável de ambiente GOOGLE_CREDENTIALS_JSON.")
         drive_service = None
     except Exception as e:
-        print(f"DEBUG: Erro geral ao carregar credenciais (fora de JSONDecodeError): {e}")
-        print(f"Erro ao carregar as credenciais do Google Drive: {e}")
+        logging.error(f"DEBUG: Erro geral ao carregar credenciais (fora de JSONDecodeError): {e}")
+        logging.error(f"Erro ao carregar as credenciais do Google Drive: {e}")
         drive_service = None
 else:
-    print("DEBUG: GOOGLE_CREDENTIALS_JSON não foi encontrada (valor é None ou vazio).")
-    print("Erro: Variável de ambiente GOOGLE_CREDENTIALS_JSON não encontrada.")
+    logging.info("DEBUG: GOOGLE_CREDENTIALS_JSON não foi encontrada (valor é None ou vazio).")
+    logging.error("Erro: Variável de ambiente GOOGLE_CREDENTIALS_JSON não encontrada.")
     drive_service = None
-print(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
+logging.info(f"--- FIM DO BLOCO DE DEBUG (Início do app.py) ---")
 
 # --- ROTAS DE ARQUIVOS ESPECÍFICOS (SERVICE WORKER, MANIFEST) ---
 # Estas rotas servem arquivos essenciais para o funcionamento do PWA.
@@ -113,7 +116,7 @@ mail_port_str = os.environ.get('MAIL_PORT', '587')
 try:
     app.config['MAIL_PORT'] = int(mail_port_str)
 except ValueError:
-    print(f"DEBUG: MAIL_PORT '{mail_port_str}' não é um número válido. Usando 587 como padrão.")
+    logging.warning(f"DEBUG: MAIL_PORT '{mail_port_str}' não é um número válido. Usando 587 como padrão.")
     app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
 app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'false').lower() == 'true'
@@ -131,10 +134,10 @@ def send_verification_email(user, token, new_email):
     msg.body = f'Por favor, clique no link abaixo para verificar seu novo endereço de e-mail:\n\n{link}\n\nSe você não solicitou esta alteração, ignore este e-mail.'
     try:
         mail.send(msg)
-        print(f"E-mail de verificação enviado com sucesso para {new_email}")
+        logging.info(f"E-mail de verificação enviado com sucesso para {new_email}")
     except Exception as e:
         flash(f'Erro ao enviar e-mail de verificação: {e}', 'error')
-        print(f"Erro ao enviar e-mail de verificação: {e}")
+        logging.error(f"Erro ao enviar e-mail de verificação: {e}")
 app.send_verification_email = send_verification_email
 
 # --- Configuração do Flask-Login ---
@@ -153,13 +156,13 @@ USUARIO_LOGADO = None # Esta variável global pode não ser necessária se você
 # ESTE É O PONTO CRÍTICO. Estas linhas DEVEM estar fora do if __name__ == '__main__':
 # para garantir que os Blueprints sejam registrados quando o Gunicorn (ou outro servidor WSGI)
 # importa o aplicativo no ambiente de produção (Render).
-print("--- DEBUG: Antes de registrar auth_bp em app.py ---")
+logging.info("--- DEBUG: Antes de registrar auth_bp em app.py ---")
 app.register_blueprint(auth_bp)
-print("--- DEBUG: auth_bp registrado com sucesso em app.py ---")
+logging.info("--- DEBUG: auth_bp registrado com sucesso em app.py ---")
 
-print("--- DEBUG: Antes de registrar profile_bp em app.py ---")
+logging.info("--- DEBUG: Antes de registrar profile_bp em app.py ---")
 app.register_blueprint(profile_bp)
-print("--- DEBUG: profile_bp registrado com sucesso em app.py ---")
+logging.info("--- DEBUG: profile_bp registrado com sucesso em app.py ---")
 
 
 # --- INICIALIZAÇÃO DO BANCO DE DADOS E CRIAÇÃO DE TABELAS ---
@@ -211,7 +214,7 @@ def verify_email(token):
             flash('Link de verificação inválido ou usuário não encontrado.', 'error')
     except Exception as e:
         local_session.rollback()
-        print(f"Erro ao verificar e-mail: {e}")
+        logging.error(f"Erro ao verificar e-mail: {e}") # Mudei print para logging.error
         flash(f'Ocorreu um erro ao verificar seu e-mail: {e}', 'error')
     finally:
         local_session.close()

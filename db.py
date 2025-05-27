@@ -1,22 +1,29 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-import logging # Importar logging para depuração
-from .models import User, Company # Exemplo: SUAS CLASSES DE MODELO AQUI!
+import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Configuração do logging
-logging.basicConfig(level=logging.INFO)
+# Use a variável de ambiente DATABASE_URL
+# Esta linha define qual banco de dados será usado.
+# No Render, ela pegará o valor de sua variável de ambiente DATABASE_URL.
+# Localmente, se a variável não estiver definida, usará 'sqlite:///site.db'.
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
 
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'sua_chave_secreta_padrao')
+# Cria o engine do SQLAlchemy.
+# O engine é a interface principal para interagir com o banco de dados.
+engine = create_engine(DATABASE_URL)
 
-# ... suas rotas e blueprints aqui ...
+# Cria a sessão.
+# A sessão é o "palco" onde você interage com seus objetos de banco de dados (usuários, empresas, etc.).
+Session = sessionmaker(bind=engine)
 
-# ESTE É O BLOCO CRÍTICO PARA CRIAR AS TABELAS
-with app.app_context(): # Garante que estamos no contexto da aplicação Flask
-    try:
-        logging.info("--- DEBUG: Tentando criar tabelas do banco de dados (Base.metadata.create_all) ---")
-        Base.metadata.create_all(engine) # Aqui as tabelas são criadas
-        logging.info("--- DEBUG: Tabelas do banco de dados criadas com sucesso ou já existentes. ---")
-    except Exception as e:
-        logging.error(f"--- ERRO: Falha ao criar tabelas do banco de dados: {e} ---")
-        # Adicione um raise aqui se quiser que o app falhe se as tabelas não puderem ser criadas
-        # raise
+# Base para seus modelos declarativos.
+# Todas as suas classes de modelo (como User, Company) devem herdar desta Base.
+# É através desta Base que o SQLAlchemy "descobre" as tabelas a serem criadas.
+Base = declarative_base()
+
+# IMPORTANTE:
+# As classes de modelo (ex: User, Company) NÃO devem ser importadas neste arquivo (db.py).
+# Elas devem ser definidas em 'models.py' e importadas no 'app.py' (ou em outro arquivo principal)
+# ANTES da chamada 'Base.metadata.create_all(engine)'.
+# A linha 'from .models import User, Company' que causou o erro ANTERIORMENTE
+# NÃO DEVE ESTAR AQUI.
