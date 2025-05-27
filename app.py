@@ -17,9 +17,12 @@ from flask_mail import Mail, Message
 from auth import auth_bp
 from profile_routes import profile_bp
 from drive_integration import listar_arquivos as listar_arquivos_func, download_file
+
+# IMPORTANTE: Garanta que TODOS os seus modelos (User, Company, etc.) estejam importados aqui
+# Isso garante que o SQLAlchemy os "conheça" antes de tentar criar as tabelas.
+from models import User # Se tiver outras classes de modelo, importe-as também: , Company, Product
 from database_utils import load_user
-from models import User
-from db import engine, Session, Base
+from db import engine, Session, Base # Importar o que você definiu em db.py
 
 # Configuração básica de logging para depuração
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -158,12 +161,19 @@ print("--- DEBUG: Antes de registrar profile_bp em app.py ---")
 app.register_blueprint(profile_bp)
 print("--- DEBUG: profile_bp registrado com sucesso em app.py ---")
 
-# --- INICIALIZAÇÃO DO BANCO DE DADOS (MOVIDO PARA CÁ) ---
-# Esta linha agora será executada quando o Gunicorn importar o app,
-# garantindo que as tabelas sejam criadas no ambiente de produção.
-print("--- DEBUG: Criando tabelas do banco de dados (Base.metadata.create_all) ---")
-Base.metadata.create_all(engine)
-print("--- DEBUG: Tabelas do banco de dados criadas (ou já existentes) ---")
+
+# --- INICIALIZAÇÃO DO BANCO DE DADOS E CRIAÇÃO DE TABELAS ---
+# MOVIDO PARA DENTRO DE app.app_context() e com tratamento de erro
+# para garantir que seja executado no contexto correto e logue falhas.
+with app.app_context():
+    try:
+        logging.info("--- DEBUG: Tentando criar tabelas do banco de dados (Base.metadata.create_all) ---")
+        Base.metadata.create_all(engine) # Aqui as tabelas são criadas
+        logging.info("--- DEBUG: Tabelas do banco de dados criadas com sucesso ou já existentes. ---")
+    except Exception as e:
+        logging.error(f"--- ERRO: Falha ao criar tabelas do banco de dados: {e} ---")
+        # Dependendo da severidade, você pode querer que o app falhe se as tabelas não forem criadas
+        # raise # Descomente esta linha se quiser que o deploy falhe em caso de erro na criação das tabelas
 
 
 # --- Rotas que exigem login (Protegidas por @login_required) ---

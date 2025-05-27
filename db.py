@@ -1,30 +1,23 @@
-'''# db.py
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+import logging # Importar logging para depuração
+from .db import engine, Session, Base # Importar o que você definiu em db.py
+from .models import User, Company # Exemplo: SUAS CLASSES DE MODELO AQUI!
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+# Configuração do logging
+logging.basicConfig(level=logging.INFO)
 
-Base = declarative_base()
-engine = create_engine('sqlite:///site.db') # Substitua pela sua URL de banco de dados
-Session = sessionmaker(bind=engine)
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'sua_chave_secreta_padrao')
 
-# NÃO crie uma instância de 'session' aqui.
-# Em vez disso, cada rota ou função que precisar de uma sessão
-# criará uma usando 'local_session = Session()' e a fechará com 'local_session.close()'.
-# Isso evita problemas de thread safety e gerenciamento de conexão.'''
+# ... suas rotas e blueprints aqui ...
 
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-
-# Use a variável de ambiente DATABASE_URL
-DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
-
-# Cria o engine do SQLAlchemy
-engine = create_engine(DATABASE_URL)
-
-# Cria a sessão
-Session = sessionmaker(bind=engine)
-
-# Base para seus modelos declarativos
-Base = declarative_base()
+# ESTE É O BLOCO CRÍTICO PARA CRIAR AS TABELAS
+with app.app_context(): # Garante que estamos no contexto da aplicação Flask
+    try:
+        logging.info("--- DEBUG: Tentando criar tabelas do banco de dados (Base.metadata.create_all) ---")
+        Base.metadata.create_all(engine) # Aqui as tabelas são criadas
+        logging.info("--- DEBUG: Tabelas do banco de dados criadas com sucesso ou já existentes. ---")
+    except Exception as e:
+        logging.error(f"--- ERRO: Falha ao criar tabelas do banco de dados: {e} ---")
+        # Adicione um raise aqui se quiser que o app falhe se as tabelas não puderem ser criadas
+        # raise
