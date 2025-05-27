@@ -1,10 +1,12 @@
 # models.py
 
 from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy.ext.declarative import declarative_base
+# REMOVA A LINHA ABAIXO, pois ela cria uma nova Base:
+# from sqlalchemy.ext.declarative import declarative_base
 from flask_login import UserMixin
 
-Base = declarative_base()
+# IMPORTA A Base DEFINIDA EM db.py
+from db import Base # <-- ADICIONE ESTA LINHA e REMOVA as duas acima!
 
 class User(Base, UserMixin):
     __tablename__ = 'users'
