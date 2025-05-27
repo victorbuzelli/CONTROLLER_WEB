@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import logging # Importar logging para depuração
-from .db import engine, Session, Base # Importar o que você definiu em db.py
 from .models import User, Company # Exemplo: SUAS CLASSES DE MODELO AQUI!
 
 # Configuração do logging
