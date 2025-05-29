@@ -32,6 +32,27 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Inicializa o aplicativo Flask
 app = Flask(__name__)
+
+#--- CONFIGURAÇÃO DO BANCO DE DADOS (NOVA POSIÇÃO E ORDEM) ---
+# 1. Define a URI do banco de dados a partir da variável de ambiente.
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+
+# 2. Verifica se a URI foi definida. Se não, avisa e usa SQLite (apenas para dev local).
+if not app.config['SQLALCHEMY_DATABASE_URI']:
+    logging.warning("AVISO: SQLALCHEMY_DATABASE_URI não definida. Usando SQLite local. ISSO NÃO SERÁ PERSISTENTE NO RENDER!")
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db' # Fallback para SQLite local
+    # IMPORTANTE: Se você não quiser fallback para SQLite em produção,
+    # você pode forçar o app a falhar aqui se a variável não estiver presente.
+
+# 3. Cria o engine do SQLAlchemy usando a URI definida no app.config.
+#    O engine precisa ser acessível globalmente ou passado para as sessões.
+#    Vamos criar um 'db_engine' aqui e passá-lo para Session e Base.
+db_engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+
+# 4. Bind o Session e o Base com o engine criado.
+Session.configure(bind=db_engine) # Configura a sessão com o engine correto
+Base.metadata.bind = db_engine # Vincula os metadados da base ao engine
+
 # Configura a chave secreta para segurança de sessão e outras funcionalidades
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'gesspwfmikqqizim')
 
@@ -173,7 +194,7 @@ with app.app_context():
     try:
         # NOVO: Tenta apagar e recriar o esquema 'public' para garantir um ambiente limpo.
         # Isso é uma medida agressiva de depuração para o problema de tabelas não encontradas.
-        with engine.connect() as connection:
+        with db_engine.connect() as connection: # Use db_engine aqui
             # Primeiro, tenta apagar o esquema 'public' e tudo dentro dele
             logging.info("--- DEBUG: Tentando apagar esquema 'public' (se existir) ---")
             connection.execute(text("DROP SCHEMA IF EXISTS public CASCADE;"))
@@ -184,19 +205,19 @@ with app.app_context():
 
         logging.info("--- DEBUG: Tentando criar tabelas do banco de dados (Base.metadata.create_all) ---")
         # Força a criação das tabelas no esquema 'public'
-        Base.metadata.create_all(engine) # checkfirst=True não é tão necessário após DROP SCHEMA
+        Base.metadata.create_all(db_engine) # Use db_engine aqui
         logging.info("--- DEBUG: Tabelas do banco de dados criadas com sucesso ou já existentes. ---")
 
         # NOVO: Verificação explícita da existência da tabela 'users'
-        with engine.connect() as connection:
+        with db_engine.connect() as connection: # Use db_engine aqui
             result = connection.execute(text("SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'users');")).scalar()
             if result:
                 logging.info("--- DEBUG: Tabela 'users' encontrada no esquema 'public' após create_all. ---")
             else:
                 logging.error("--- ERRO CRÍTICO: Tabela 'users' NÃO encontrada no esquema 'public' após create_all. ---")
-                # Se isso acontecer, o problema é mais profundo.
-                # Pode ser que o usuário do DB não tenha permissão para criar ou ver a tabela.
-                # Ou que a conexão esteja em um estado estranho.
+
+    except Exception as e:
+        logging.error(f"--- ERRO: Falha ao criar tabelas do banco de dados: {e} ---")
 
     except Exception as e:
         logging.error(f"--- ERRO: Falha ao criar tabelas do banco de dados: {e} ---")
