@@ -25,7 +25,7 @@ from drive_integration import listar_arquivos as listar_arquivos_func, download_
 from models import User # Mantenha esta linha
 from database_utils import load_user
 from db import engine, Session, Base # Importa o que você definiu em db.py
-from sqlalchemy import text # Importa 'text' para executar SQL puro
+from sqlalchemy import create_engine, text
 
 # Configuração básica de logging para depuração
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
